@@ -1,8 +1,9 @@
-from cmd.root import RootCmd
+from cmd.root import RootCommand
 
 
 def main():
-    RootCmd().execute()
+    RootCommand().execute()
+
 
 if __name__ == '__main__':
     main()
