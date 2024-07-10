@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+    command:
+      - -g
     volumes:
       - ./ml-dcs:/usr/local/src/ml-dcs
     ports:
@@ -12,3 +14,10 @@ services:
     environment:
       PORT: "8000"
       TZ: "Asia/Tokyo"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
