@@ -1,4 +1,5 @@
 from ml_dcs.cmd.root import RootCommand
+from ml_dcs.config import config  # NOQA
 
 
 def main():
