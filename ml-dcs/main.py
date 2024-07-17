@@ -1,4 +1,4 @@
-from cmd.root import RootCommand
+from ml_dcs.cmd.root import RootCommand
 
 
 def main():

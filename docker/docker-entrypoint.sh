@@ -34,7 +34,7 @@ if [ "$QUIT" = "1" ]; then
 fi
 
 if [ "${ENVIRONMENT:-}" = "dev" ]; then
-    jupyter-lab --ip=0.0.0.0 --port="${PORT:-8000}" --no-browser --NotebookApp.token=''
+    jupyter-lab --ip=0.0.0.0 --port="${PORT:-8000}" --no-browser --NotebookApp.token='token'
 elif [ "${ENVIRONMENT:-}" = "prod" ]; then
     python /usr/local/src/"${APP}"/main.py
 fi
