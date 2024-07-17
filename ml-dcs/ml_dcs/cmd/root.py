@@ -2,6 +2,7 @@ import argparse
 
 from ml_dcs.cmd.try_sample import TrySampleCommand
 
+
 class RootCommand:
     description = "Machine Learning for Discrete Controller Synthesis"
 
