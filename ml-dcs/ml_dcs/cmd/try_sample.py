@@ -11,7 +11,7 @@ from sklearn.utils import Bunch
 
 
 class TrySampleCommand:
-    name = 'try_sample'
+    name = "try_sample"
     help = "Try sample of scikit-learn dataset"
 
     @classmethod
@@ -28,10 +28,7 @@ class TrySampleCommand:
 
         # create train and test data
         x_train, x_test, y_train, y_test = train_test_split(
-            df.iloc[:, :-1],
-            df.iloc[:, -1],
-            test_size=0.2,
-            random_state=42
+            df.iloc[:, :-1], df.iloc[:, -1], test_size=0.2, random_state=42
         )
 
         # standardize
@@ -46,8 +43,8 @@ class TrySampleCommand:
 
         predictions: np.ndarray = linear_regression.predict(x_test_std)
         r2 = r2_score(y_test, predictions)
-        print(f'R2: {r2:.2f}')
+        print(f"R2: {r2:.2f}")
         mae = mean_absolute_error(y_test, predictions)
-        print(f'MAE: {mae:.2f}')
-        print(f'Coefficients: {linear_regression.coef_}')
-        print(f'Intercept: {linear_regression.intercept_}')
+        print(f"MAE: {mae:.2f}")
+        print(f"Coefficients: {linear_regression.coef_}")
+        print(f"Intercept: {linear_regression.intercept_}")

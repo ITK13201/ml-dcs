@@ -5,7 +5,6 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
-  - black=24.4.2=py312h7900ff3_0
   - brotli=1.0.9=h5eee18b_8
   - brotli-bin=1.0.9=h5eee18b_8
   - bzip2=1.0.8=h5eee18b_6
