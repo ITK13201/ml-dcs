@@ -22,8 +22,5 @@ COPY --chown=${APP}:${APP} ./${APP} .
 COPY --chown=${APP}:${APP} ./docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENV CONDA_DEFAULT_ENV ${APP}
-ENV PATH /opt/conda/envs/${APP}/bin:${PATH}
-
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["-d"]

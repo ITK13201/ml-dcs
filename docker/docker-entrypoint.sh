@@ -3,6 +3,9 @@
 set -eu
 
 APP=ml-dcs
+ANACONDA_BIN=/home/${APP}/.conda/envs/${APP}/bin
+EXEC_JUPYTER_LAB=${ANACONDA_BIN}/jupyter-lab
+EXEC_PYTHON=${ANACONDA_BIN}/python
 
 usage() {
     echo "Usage: $0 [-d] [-q]" 1>&2
@@ -34,7 +37,7 @@ if [ "$QUIT" = "1" ]; then
 fi
 
 if [ "${ENVIRONMENT:-}" = "dev" ]; then
-    jupyter-lab --ip=0.0.0.0 --port="${PORT:-8000}" --no-browser --NotebookApp.token='token'
+    ${EXEC_JUPYTER_LAB} --ip=0.0.0.0 --port="${PORT:-8000}" --no-browser --NotebookApp.token='token'
 elif [ "${ENVIRONMENT:-}" = "prod" ]; then
-    python /usr/local/src/"${APP}"/main.py
+    ${EXEC_PYTHON} /usr/local/src/"${APP}"/main.py
 fi
