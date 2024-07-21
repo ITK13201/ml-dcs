@@ -1,5 +1,7 @@
 import argparse
 
+from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
+
 
 class PredictCalculationTimeCommand:
     name = "predict_calculation_time"
@@ -16,9 +18,8 @@ class PredictCalculationTimeCommand:
 
     @classmethod
     def execute(cls, args: argparse.Namespace):
-        pass
-        # mtsa_util = MTSADataUtil(input_dir_path="./tmp/input/2024-07-04")
-        # data = mtsa_util.parse_data()
-        #
-        # for mtsa_result in data:
-        #     print(mtsa_result.lts, mtsa_result.duration_iso)
+        mtsa_util = MTSADataUtil(input_dir_path="./tmp/2024-07-04/input")
+        data = mtsa_util._parse_data()
+
+        for mtsa_result in data:
+            print(mtsa_result.lts, mtsa_result.duration_iso)

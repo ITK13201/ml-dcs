@@ -1,8 +1,14 @@
 from datetime import datetime, timedelta
 from typing import List
 
-import isodate
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ByteSize,
+    field_validator,
+    TypeAdapter,
+)
 from pydantic.alias_generators import to_camel
 
 
@@ -14,17 +20,27 @@ class MTSAResultCompileStepEnvironment(BaseModel):
     number_of_max_states: int
     number_of_states: int
     number_of_transitions: int
-    compose_duration: int = Field(alias="composeDuration [ms]")
+    compose_duration: timedelta = Field(alias="composeDuration [ms]")
     source_models: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
+    @field_validator("compose_duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_compose_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
+
 
 class MTSAResultCompileStepRequirement(BaseModel):
     name: str
-    minimize_duration: int = Field(alias="minimizeDuration [ms]")
+    minimize_duration: timedelta = Field(alias="minimizeDuration [ms]")
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    @field_validator("minimize_duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_minimize_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
 
 
 class MTSAResultCompileStepFinalModel(BaseModel):
@@ -46,10 +62,15 @@ class MTSAResultComposeStepCreatingGameSpace(BaseModel):
     number_of_transitions: int
     number_of_controllable_actions: int
     number_of_uncontrollable_actions: int
-    compose_duration: int = Field(alias="composeDuration [ms]")
+    compose_duration: timedelta = Field(alias="composeDuration [ms]")
     source_models: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    @field_validator("compose_duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_compose_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
 
 
 class MTSAResultComposeStepSolvingProblem(BaseModel):
@@ -58,11 +79,21 @@ class MTSAResultComposeStepSolvingProblem(BaseModel):
     number_of_transitions: int
     number_of_controllable_actions: int
     number_of_uncontrollable_actions: int
-    compose_duration: int = Field(alias="composeDuration [ms]")
-    solving_duration: int = Field(alias="solvingDuration [ms]")
+    compose_duration: timedelta = Field(alias="composeDuration [ms]")
+    solving_duration: timedelta = Field(alias="solvingDuration [ms]")
     source_models: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    @field_validator("compose_duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_compose_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
+
+    @field_validator("solving_duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_solving_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
 
 
 # ===
@@ -100,16 +131,24 @@ class MTSAResult(BaseModel):
 
     started_at: datetime
     finished_at: datetime
-    duration: int = Field(alias="duration [ms]")
-    max_memory_usage: int = Field(alias="maxMemoryUsage [KiB]")
+    duration: timedelta = Field(alias="duration [ms]")
+    max_memory_usage: ByteSize = Field(alias="maxMemoryUsage [KiB]")
 
     # configuration of this model
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
-    @property
-    def duration_timedelta(self) -> timedelta:
-        return timedelta(milliseconds=self.duration)
+    @field_validator("duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
+
+    @field_validator("max_memory_usage", mode="before", check_fields=True)
+    @classmethod
+    def validate_max_memory_usage(cls, v: int) -> ByteSize:
+        kib = 2**10
+        return ByteSize(v * kib)
 
     @property
     def duration_iso(self) -> str:
-        return isodate.duration_isoformat(self.duration_timedelta)
+        adapter = TypeAdapter(timedelta)
+        return adapter.dump_python(self.duration, mode="json")
