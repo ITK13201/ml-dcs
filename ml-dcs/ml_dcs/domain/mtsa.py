@@ -85,6 +85,10 @@ class MTSAResultComposeStepSolvingProblem(BaseModel):
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._total_duration = None
+
     @field_validator("compose_duration", mode="before", check_fields=True)
     @classmethod
     def validate_compose_duration(cls, v: int) -> timedelta:
@@ -94,6 +98,12 @@ class MTSAResultComposeStepSolvingProblem(BaseModel):
     @classmethod
     def validate_solving_duration(cls, v: int) -> timedelta:
         return timedelta(milliseconds=float(v))
+
+    @property
+    def total_duration(self) -> timedelta:
+        if self._total_duration is None:
+            self._total_duration = self.compose_duration + self.solving_duration
+        return self._total_duration
 
 
 # ===
@@ -106,6 +116,79 @@ class MTSAResultCompileStep(BaseModel):
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._total_compose_duration_of_environments = None
+        self._total_minimize_duration_of_requirements = None
+        self._total_duration = None
+        self._total_number_of_states = None
+        self._total_number_of_transitions = None
+        self._total_number_of_controllable_actions = None
+        self._total_number_of_uncontrollable_actions = None
+
+    @property
+    def total_compose_duration_of_environments(self) -> timedelta:
+        if self._total_compose_duration_of_environments is None:
+            result = timedelta(microseconds=0)
+            for environment in self.environments:
+                result += environment.compose_duration
+            self._total_compose_duration_of_environments = result
+        return self._total_compose_duration_of_environments
+
+    @property
+    def total_minimize_duration_of_requirements(self) -> timedelta:
+        if self._total_minimize_duration_of_requirements is None:
+            result = timedelta(microseconds=0)
+            for requirement in self.requirements:
+                result += requirement.minimize_duration
+            self._total_minimize_duration_of_requirements = result
+        return self._total_minimize_duration_of_requirements
+
+    @property
+    def total_duration(self) -> timedelta:
+        if self._total_duration is None:
+            self._total_duration = (
+                self.total_compose_duration_of_environments
+                + self.total_minimize_duration_of_requirements
+            )
+        return self._total_duration
+
+    @property
+    def total_number_of_states(self) -> int:
+        if self._total_number_of_states is None:
+            result = 0
+            for model in self.final_models:
+                result += model.number_of_states
+            self._total_number_of_states = result
+        return self._total_number_of_states
+
+    @property
+    def total_number_of_transitions(self) -> int:
+        if self._total_number_of_transitions is None:
+            result = 0
+            for model in self.final_models:
+                result += model.number_of_transitions
+            self._total_number_of_transitions = result
+        return self._total_number_of_transitions
+
+    @property
+    def total_number_of_controllable_actions(self) -> int:
+        if self._total_number_of_controllable_actions is None:
+            result = 0
+            for model in self.final_models:
+                result += model.number_of_controllable_actions
+            self._total_number_of_controllable_actions = result
+        return self._total_number_of_controllable_actions
+
+    @property
+    def total_number_of_uncontrollable_actions(self) -> int:
+        if self._total_number_of_uncontrollable_actions is None:
+            result = 0
+            for model in self.final_models:
+                result += model.number_of_uncontrollable_actions
+            self._total_number_of_uncontrollable_actions = result
+        return self._total_number_of_uncontrollable_actions
+
 
 class MTSAResultComposeStep(BaseModel):
     creatingGameSpace: MTSAResultComposeStepCreatingGameSpace = Field(
@@ -114,6 +197,19 @@ class MTSAResultComposeStep(BaseModel):
     solvingProblem: MTSAResultComposeStepSolvingProblem = Field(default_factory=None)
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._total_duration = None
+
+    @property
+    def total_duration(self) -> timedelta:
+        if self._total_duration is None:
+            self._total_duration = (
+                self.creatingGameSpace.compose_duration
+                + self.solvingProblem.total_duration
+            )
+        return self._total_duration
 
 
 # ===
@@ -137,6 +233,10 @@ class MTSAResult(BaseModel):
     # configuration of this model
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._significant_duration = None
+
     @field_validator("duration", mode="before", check_fields=True)
     @classmethod
     def validate_duration(cls, v: int) -> timedelta:
@@ -152,3 +252,11 @@ class MTSAResult(BaseModel):
     def duration_iso(self) -> str:
         adapter = TypeAdapter(timedelta)
         return adapter.dump_python(self.duration, mode="json")
+
+    @property
+    def significant_duration(self):
+        if self._significant_duration is None:
+            self._significant_duration = (
+                self.compile_step.total_duration + self.compose_step.total_duration
+            )
+        return self._significant_duration
