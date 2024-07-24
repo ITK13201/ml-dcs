@@ -285,3 +285,7 @@ class MTSAResult(BaseModel):
                 self.compile_step.total_duration + self.compose_step.total_duration
             )
         return self._significant_duration
+
+    @property
+    def significant_duration_ms(self) -> float:
+        return self.significant_duration / timedelta(milliseconds=1)
