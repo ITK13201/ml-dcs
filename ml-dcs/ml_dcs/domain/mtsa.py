@@ -125,6 +125,8 @@ class MTSAResultCompileStep(BaseModel):
         self._total_number_of_transitions = None
         self._total_number_of_controllable_actions = None
         self._total_number_of_uncontrollable_actions = None
+        self._ratio_of_controllable_actions = None
+        self._number_of_models = None
 
     @property
     def total_compose_duration_of_environments(self) -> timedelta:
@@ -188,6 +190,21 @@ class MTSAResultCompileStep(BaseModel):
                 result += model.number_of_uncontrollable_actions
             self._total_number_of_uncontrollable_actions = result
         return self._total_number_of_uncontrollable_actions
+
+    @property
+    def ratio_of_controllable_actions(self) -> float:
+        if self._ratio_of_controllable_actions is None:
+            self._ratio_of_controllable_actions = (
+                self.total_number_of_controllable_actions
+                / self.total_number_of_transitions
+            )
+        return self._ratio_of_controllable_actions
+
+    @property
+    def number_of_models(self) -> int:
+        if self._number_of_models is None:
+            self._number_of_models = len(self.final_models)
+        return self._number_of_models
 
 
 class MTSAResultComposeStep(BaseModel):
