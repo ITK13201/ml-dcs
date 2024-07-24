@@ -266,9 +266,17 @@ class MTSAResult(BaseModel):
         return ByteSize(v * kib)
 
     @property
+    def duration_ms(self) -> float:
+        return self.duration / timedelta(milliseconds=1)
+
+    @property
     def duration_iso(self) -> str:
         adapter = TypeAdapter(timedelta)
         return adapter.dump_python(self.duration, mode="json")
+
+    @property
+    def max_memory_usage_kib(self) -> float:
+        return self.max_memory_usage.to("KiB")
 
     @property
     def significant_duration(self):
