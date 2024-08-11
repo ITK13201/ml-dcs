@@ -13,6 +13,29 @@ from pydantic.alias_generators import to_camel
 
 
 # ===
+# classes by MTSAResultInitialModels
+# ===
+class MTSAResultInitialModelsEnvironment(BaseModel):
+    name: str
+    number_of_states: int
+    number_of_transitions: int
+    number_of_controllable_actions: int
+    number_of_uncontrollable_actions: int
+
+    model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+
+class MTSAResultInitialModelsRequirement(BaseModel):
+    name: str
+    number_of_states: int
+    number_of_transitions: int
+    number_of_controllable_actions: int
+    number_of_uncontrollable_actions: int
+
+    model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+
+# ===
 # classes by MTSAResultCompileStep
 # ===
 class MTSAResultCompileStepEnvironment(BaseModel):
@@ -109,6 +132,110 @@ class MTSAResultComposeStepSolvingProblem(BaseModel):
 # ===
 # classes by MTSAResult
 # ===
+class MTSAResultInitialModels(BaseModel):
+    environments: List[MTSAResultInitialModelsEnvironment] = Field(default_factory=list)
+    requirements: List[MTSAResultInitialModelsRequirement] = Field(default_factory=list)
+
+    model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._number_of_models_of_environments = None
+        self._max_number_of_states_of_environments = None
+        self._sum_of_number_of_transitions_of_environments = None
+        self._sum_of_number_of_controllable_actions_of_environments = None
+        self._sum_of_number_of_uncontrollable_actions_of_environments = None
+        self._number_of_models_of_requirements = None
+        self._sum_of_number_of_states_of_requirements = None
+        self._sum_of_number_of_transitions_of_requirements = None
+        self._sum_of_number_of_controllable_actions_of_requirements = None
+        self._sum_of_number_of_uncontrollable_actions_of_requirements = None
+
+    @property
+    def number_of_models_of_environments(self) -> int:
+        if self._number_of_models_of_environments is None:
+            self._number_of_models_of_environments = len(self.environments)
+        return self._number_of_models_of_environments
+
+    @property
+    def max_number_of_states_of_environments(self) -> int:
+        if self._max_number_of_states_of_environments is None:
+            result = 1
+            for environment in self.environments:
+                result *= environment.number_of_states
+            self._max_number_of_states_of_environments = result
+        return self._max_number_of_states_of_environments
+
+    @property
+    def sum_of_number_of_transitions_of_environments(self) -> int:
+        if self._sum_of_number_of_transitions_of_environments is None:
+            result = 0
+            for environment in self.environments:
+                result += environment.number_of_transitions
+            self._sum_of_number_of_transitions_of_environments = result
+        return self._sum_of_number_of_transitions_of_environments
+
+    @property
+    def sum_of_number_of_controllable_actions_of_environments(self) -> int:
+        if self._sum_of_number_of_controllable_actions_of_environments is None:
+            result = 0
+            for environment in self.environments:
+                result += environment.number_of_controllable_actions
+            self._sum_of_number_of_controllable_actions_of_environments = result
+        return self._sum_of_number_of_controllable_actions_of_environments
+
+    @property
+    def sum_of_number_of_uncontrollable_actions_of_environments(self) -> int:
+        if self._sum_of_number_of_uncontrollable_actions_of_environments is None:
+            result = 0
+            for environment in self.environments:
+                result += environment.number_of_uncontrollable_actions
+            self._sum_of_number_of_uncontrollable_actions_of_environments = result
+        return self._sum_of_number_of_uncontrollable_actions_of_environments
+
+    @property
+    def number_of_models_of_requirements(self) -> int:
+        if self._number_of_models_of_requirements is None:
+            self._number_of_models_of_requirements = len(self.requirements)
+        return self._number_of_models_of_requirements
+
+    @property
+    def sum_of_number_of_states_of_requirements(self) -> int:
+        if self._sum_of_number_of_states_of_requirements is None:
+            result = 0
+            for requirement in self.requirements:
+                result += requirement.number_of_states
+            self._sum_of_number_of_states_of_requirements = result
+        return self._sum_of_number_of_states_of_requirements
+
+    @property
+    def sum_of_number_of_transitions_of_requirements(self) -> int:
+        if self._sum_of_number_of_transitions_of_requirements is None:
+            result = 0
+            for requirement in self.requirements:
+                result += requirement.number_of_transitions
+            self._sum_of_number_of_transitions_of_requirements = result
+        return self._sum_of_number_of_transitions_of_requirements
+
+    @property
+    def sum_of_number_of_controllable_actions_of_requirements(self) -> int:
+        if self._sum_of_number_of_controllable_actions_of_requirements is None:
+            result = 0
+            for requirement in self.requirements:
+                result += requirement.number_of_controllable_actions
+            self._sum_of_number_of_controllable_actions_of_requirements = result
+        return self._sum_of_number_of_controllable_actions_of_requirements
+
+    @property
+    def sum_of_number_of_uncontrollable_actions_of_requirements(self) -> int:
+        if self._sum_of_number_of_uncontrollable_actions_of_requirements is None:
+            result = 0
+            for requirement in self.requirements:
+                result += requirement.number_of_uncontrollable_actions
+            self._sum_of_number_of_uncontrollable_actions_of_requirements = result
+        return self._sum_of_number_of_uncontrollable_actions_of_requirements
+
+
 class MTSAResultCompileStep(BaseModel):
     environments: List[MTSAResultCompileStepEnvironment] = Field(default_factory=list)
     requirements: List[MTSAResultCompileStepRequirement] = Field(default_factory=list)
@@ -239,6 +366,7 @@ class MTSAResult(BaseModel):
     target: str
     lts: str
 
+    initial_models: MTSAResultInitialModels = Field(default_factory=None)
     compile_step: MTSAResultCompileStep = Field(default_factory=None)
     compose_step: MTSAResultComposeStep = Field(default_factory=None)
 
