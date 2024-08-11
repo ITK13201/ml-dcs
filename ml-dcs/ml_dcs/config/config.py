@@ -1,5 +1,10 @@
 from logging import config
 
+from matplotlib import pyplot as plt
+
+# ===
+# LOGGING
+# ===
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -27,3 +32,18 @@ LOGGING = {
 }
 
 config.dictConfig(LOGGING)
+
+# ===
+# MATPLOTLIB
+# ===
+plt.rcParams["font.size"] = 12
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["xtick.direction"] = "in"
+plt.rcParams["ytick.direction"] = "in"
+plt.rcParams["xtick.major.width"] = 1.2
+plt.rcParams["ytick.major.width"] = 1.2
+plt.rcParams["axes.linewidth"] = 1.2
+plt.rcParams["legend.markerscale"] = 2
+plt.rcParams["legend.fancybox"] = False
+plt.rcParams["legend.framealpha"] = 1
+plt.rcParams["legend.edgecolor"] = "black"

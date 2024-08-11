@@ -12,9 +12,11 @@ from sklearn.tree import DecisionTreeRegressor
 
 from ml_dcs.domain.ml import MLResult
 
+DEFAULT_RANDOM_STATE = 42
+
 
 class BasePrediction:
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, random_state: int = DEFAULT_RANDOM_STATE):
         self.df = df
         self.x_train: Optional[pd.DataFrame] = None
         self.x_test: Optional[pd.DataFrame] = None
@@ -23,11 +25,15 @@ class BasePrediction:
         self.x_train_std: Optional[pd.DataFrame] = None
         self.x_test_std: Optional[np.ndarray] = None
         self.predicted: Optional[np.ndarray] = None
+        self.random_state = random_state
 
     def _preprocess(self):
         # create train and test data
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            self.df.iloc[:, :-1], self.df.iloc[:, -1], test_size=0.2, random_state=42
+            self.df.iloc[:, :-1],
+            self.df.iloc[:, -1],
+            test_size=0.2,
+            random_state=DEFAULT_RANDOM_STATE,
         )
 
         # standardize
@@ -85,7 +91,7 @@ class LinearRegressionPrediction(BasePrediction):
 class RandomForestPrediction(BasePrediction):
     def _create_regression_model(self) -> RandomForestRegressor:
         self._preprocess()
-        random_forest_regressor = RandomForestRegressor()
+        random_forest_regressor = RandomForestRegressor(random_state=self.random_state)
         random_forest_regressor.fit(self.x_train_std, self.y_train)
         return random_forest_regressor
 
@@ -93,7 +99,7 @@ class RandomForestPrediction(BasePrediction):
 class GradientBoostingPrediction(BasePrediction):
     def _create_regression_model(self) -> GradientBoostingRegressor:
         self._preprocess()
-        regressor = GradientBoostingRegressor()
+        regressor = GradientBoostingRegressor(random_state=self.random_state)
         regressor.fit(self.x_train_std, self.y_train)
         return regressor
 
@@ -101,7 +107,7 @@ class GradientBoostingPrediction(BasePrediction):
 class DecisionTreePrediction(BasePrediction):
     def _create_regression_model(self) -> DecisionTreeRegressor:
         self._preprocess()
-        regressor = DecisionTreeRegressor()
+        regressor = DecisionTreeRegressor(random_state=self.random_state)
         regressor.fit(self.x_train_std, self.y_train)
         return regressor
 
@@ -109,6 +115,8 @@ class DecisionTreePrediction(BasePrediction):
 class LogisticRegressionPrediction(BasePrediction):
     def _create_regression_model(self) -> LogisticRegression:
         self._preprocess()
-        logistic_regression = LogisticRegression(max_iter=10**4)
+        logistic_regression = LogisticRegression(
+            random_state=self.random_state, max_iter=10**4
+        )
         logistic_regression.fit(self.x_train_std, self.y_train)
         return logistic_regression
