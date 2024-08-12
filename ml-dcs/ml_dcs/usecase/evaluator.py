@@ -8,7 +8,7 @@ from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
 
 
 class RandomStateEvaluator:
-    random_states = [i for i in range(0, 3000, 10)]
+    random_states = [i for i in range(0, 3000, 1)]
 
     def __init__(self, input_dir_path: str, ml_input_class, prediction_class):
         self.input_dir_path = input_dir_path
@@ -61,7 +61,13 @@ class RandomStateEvaluator:
         plt.xlim(0, 3000)
         plt.ylim(-0.5, 1)
         plt.plot([0, 3000], [0, 0], color="black", linestyle="--")
-        plt.scatter(self.random_states, self.r2_scores)
+        plt.scatter(
+            self.random_states,
+            self.r2_scores,
+            c="white",
+            edgecolors="blue",
+            s=10,
+        )
         plt.show()
 
         # plt.xlabel("The value of seed")
