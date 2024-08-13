@@ -4,3 +4,4 @@
 ### Development ###
 tmp
 *.env
+__pycache__/
