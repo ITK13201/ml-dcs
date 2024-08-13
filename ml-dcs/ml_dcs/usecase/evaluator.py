@@ -1,3 +1,6 @@
+import operator
+import time
+from statistics import variance
 from typing import Tuple, List
 
 import pandas as pd
@@ -16,6 +19,11 @@ class RandomStateEvaluator:
         self.prediction_class = prediction_class
         self.r2_scores = None
         self.mae_scores = None
+        # minutes (min)
+        self.prediction_time = None
+        self.r2_score_variance = None
+        self.best_r2_score = None
+        self.best_random_state = None
 
     def _execute_with_single_random_state(
         self, df: pd.DataFrame, random_state: int
@@ -30,6 +38,8 @@ class RandomStateEvaluator:
         util = MTSADataUtil(input_dir_path=self.input_dir_path)
         df = util.get_dataframe(ml_input_class=self.ml_input_class)
 
+        start_time = time.perf_counter()
+
         r2_scores = []
         mae_sores = []
         for random_state in self.random_states:
@@ -38,17 +48,29 @@ class RandomStateEvaluator:
             )
             r2_scores.append(result.r2_score)
             mae_sores.append(result.mae)
+
+        end_time = time.perf_counter()
+        self.prediction_time = (end_time - start_time) / 60
+
         return r2_scores, mae_sores
 
-    def evaluate(self) -> Tuple[float, float]:
+    def evaluate(self) -> Tuple[int, float, float, float]:
         if self.r2_scores is None or self.mae_scores is None:
             (
                 self.r2_scores,
                 self.mae_scores,
             ) = self._execute_with_multiple_random_states()
-        max_r2_score = max(self.r2_scores)
+        self.best_random_state, self.best_r2_score = max(
+            enumerate(self.r2_scores), key=operator.itemgetter(1)
+        )
+        self.r2_score_variance = variance(self.r2_scores)
         min_mae = max(self.mae_scores)
-        return max_r2_score, min_mae
+        return (
+            self.best_random_state,
+            self.best_r2_score,
+            self.prediction_time,
+            self.r2_score_variance,
+        )
 
     def plt_show(self):
         if self.r2_scores is None or self.mae_scores is None:
@@ -74,3 +96,11 @@ class RandomStateEvaluator:
         # plt.ylabel("Mean absolute error")
         # plt.scatter(self.random_states, self.mae_scores)
         # plt.show()
+
+    def get_graph_elements(self) -> Tuple[List[float], List[float]]:
+        if self.r2_scores is None or self.mae_scores is None:
+            (
+                self.r2_scores,
+                self.mae_scores,
+            ) = self._execute_with_multiple_random_states()
+        return self.r2_scores, self.mae_scores
