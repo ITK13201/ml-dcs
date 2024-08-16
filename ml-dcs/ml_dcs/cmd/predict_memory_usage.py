@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime
 
-from ml_dcs.domain.ml import MLCalculationTimePredictionInput2
+from ml_dcs.domain.ml import MLMemoryUsagePredictionInput2
 from ml_dcs.internal.ml.prediction_methods import (
     GradientBoostingPrediction,
     RandomForestPrediction,
@@ -16,9 +16,9 @@ from ml_dcs.usecase.evaluator import RandomStateEvaluator
 logger = logging.getLogger(__name__)
 
 
-class PredictCalculationTimeCommand:
-    name = "predict_calculation_time"
-    help = "Predict calculation time"
+class PredictMemoryUsageCommand:
+    name = "predict_memory_usage"
+    help = "Predict memory usage"
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         parser.add_argument(
@@ -29,7 +29,7 @@ class PredictCalculationTimeCommand:
         )
 
     def execute(self, args: argparse.Namespace):
-        logger.info("calculation time prediction started")
+        logger.info("memory usage prediction started")
 
         # GBDT
         logger.info("GBDT started")
@@ -51,7 +51,7 @@ class PredictCalculationTimeCommand:
         self._predict_using_lr(args.input_dir, args.output_dir)
         logger.info("LR finished")
 
-        logger.info("calculation time prediction finished")
+        logger.info("memory usage prediction finished")
 
     @staticmethod
     def _get_output_file_name(ml_algorithm: str) -> str:
@@ -59,7 +59,7 @@ class PredictCalculationTimeCommand:
             "_".join(
                 [
                     datetime.now().strftime("%y%m%d%H%M%S"),
-                    "calculation-time",
+                    "memory-usage",
                     ml_algorithm,
                 ]
             )
@@ -69,7 +69,7 @@ class PredictCalculationTimeCommand:
     def _predict_using_gbdt(self, input_dir: str, output_dir: str):
         evaluator = RandomStateEvaluator(
             input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
+            ml_input_class=MLMemoryUsagePredictionInput2,
             prediction_class=GradientBoostingPrediction,
         )
         result = evaluator.evaluate()
@@ -81,19 +81,19 @@ class PredictCalculationTimeCommand:
     def _predict_using_rf(self, input_dir: str, output_dir: str):
         evaluator = RandomStateEvaluator(
             input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
+            ml_input_class=MLMemoryUsagePredictionInput2,
             prediction_class=RandomForestPrediction,
         )
         result = evaluator.evaluate()
-        output_name = self._get_output_file_name(ml_algorithm="RF")
-        output_path = os.path.join(output_dir, output_name)
+        output_file_name = self._get_output_file_name(ml_algorithm="RF")
+        output_path = os.path.join(output_dir, output_file_name)
         with open(output_path, "w") as f:
             json.dump(result.model_dump(), f, indent=2, ensure_ascii=False)
 
     def _predict_using_dt(self, input_dir: str, output_dir: str):
         evaluator = RandomStateEvaluator(
             input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
+            ml_input_class=MLMemoryUsagePredictionInput2,
             prediction_class=DecisionTreePrediction,
         )
         result = evaluator.evaluate()
@@ -105,7 +105,7 @@ class PredictCalculationTimeCommand:
     def _predict_using_lr(self, input_dir: str, output_dir: str):
         evaluator = RandomStateEvaluator(
             input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
+            ml_input_class=MLMemoryUsagePredictionInput2,
             prediction_class=LogisticRegressionPrediction,
         )
         result = evaluator.evaluate()

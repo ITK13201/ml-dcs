@@ -14,12 +14,10 @@ class TrySampleCommand:
     name = "try_sample"
     help = "Try sample of scikit-learn dataset"
 
-    @classmethod
-    def add_arguments(cls, parser: argparse.ArgumentParser):
+    def add_arguments(self, parser: argparse.ArgumentParser):
         pass
 
-    @classmethod
-    def execute(cls, args: argparse.Namespace):
+    def execute(self, args: argparse.Namespace):
         dataset: Bunch = fetch_california_housing()
 
         # create dataframe

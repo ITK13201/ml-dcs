@@ -6,6 +6,10 @@ from typing import Tuple, List
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from ml_dcs.domain.evaluation import (
+    EvaluationResult,
+    EvaluationResultBestAccuracyScores,
+)
 from ml_dcs.domain.ml import MLResult
 from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
 
@@ -23,6 +27,7 @@ class RandomStateEvaluator:
         self.prediction_time = None
         self.r2_score_variance = None
         self.best_r2_score = None
+        self.best_mae_score = None
         self.best_random_state = None
 
     def _execute_with_single_random_state(
@@ -50,11 +55,11 @@ class RandomStateEvaluator:
             mae_sores.append(result.mae)
 
         end_time = time.perf_counter()
-        self.prediction_time = (end_time - start_time) / 60
+        self.prediction_time = end_time - start_time
 
         return r2_scores, mae_sores
 
-    def evaluate(self) -> Tuple[int, float, float, float]:
+    def evaluate(self) -> EvaluationResult:
         if self.r2_scores is None or self.mae_scores is None:
             (
                 self.r2_scores,
@@ -64,13 +69,23 @@ class RandomStateEvaluator:
             enumerate(self.r2_scores), key=operator.itemgetter(1)
         )
         self.r2_score_variance = variance(self.r2_scores)
-        min_mae = max(self.mae_scores)
-        return (
-            self.best_random_state,
-            self.best_r2_score,
-            self.prediction_time,
-            self.r2_score_variance,
+        self.best_mae_score = self.mae_scores[self.best_random_state]
+
+        result = EvaluationResult(
+            ml_algorithm=self.prediction_class.ml_algorithm,
+            ml_input_class=self.ml_input_class.__name__,
+            random_states=self.random_states,
+            r2_scores=self.r2_scores,
+            mae_scores=self.mae_scores,
+            r2_score_variance=self.r2_score_variance,
+            prediction_time=self.prediction_time,
+            best_accuracy_scores=EvaluationResultBestAccuracyScores(
+                random_state=self.best_random_state,
+                r2_score=self.best_r2_score,
+                mae_score=self.best_mae_score,
+            ),
         )
+        return result
 
     def plt_show(self):
         if self.r2_scores is None or self.mae_scores is None:

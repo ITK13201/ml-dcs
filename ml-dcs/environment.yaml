@@ -115,6 +115,7 @@ dependencies:
   - parso=0.8.3=pyhd3eb1b0_0
   - pathspec=0.10.3=py312h06a4308_0
   - patsy=0.5.6=py312h06a4308_0
+  - pendulum=3.0.0=py312h32937e7_0
   - pexpect=4.8.0=pyhd3eb1b0_3
   - pillow=10.4.0=py312h287a98d_0
   - pip=24.0=py312h06a4308_0
@@ -161,6 +162,7 @@ dependencies:
   - statsmodels=0.14.2=py312ha883a20_0
   - terminado=0.17.1=py312h06a4308_0
   - threadpoolctl=3.5.0=py312he106c6f_0
+  - time-machine=2.15.0=py312h41a817b_0
   - tinycss2=1.2.1=py312h06a4308_0
   - tk=8.6.13=noxft_h4845f30_101
   - tomli=2.0.1=py312h06a4308_1

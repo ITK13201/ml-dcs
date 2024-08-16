@@ -16,6 +16,8 @@ DEFAULT_RANDOM_STATE = 42
 
 
 class BasePrediction:
+    ml_algorithm = None
+
     def __init__(self, df: pd.DataFrame, random_state: int = DEFAULT_RANDOM_STATE):
         self.df = df
         self.x_train: Optional[pd.DataFrame] = None
@@ -81,6 +83,8 @@ class BasePrediction:
 
 
 class LinearRegressionPrediction(BasePrediction):
+    ml_algorithm = "LinearRegression"
+
     def _create_regression_model(self) -> LinearRegression:
         self._preprocess()
         linear_regression = LinearRegression()
@@ -89,6 +93,8 @@ class LinearRegressionPrediction(BasePrediction):
 
 
 class RandomForestPrediction(BasePrediction):
+    ml_algorithm = "RandomForest"
+
     def _create_regression_model(self) -> RandomForestRegressor:
         self._preprocess()
         random_forest_regressor = RandomForestRegressor(random_state=self.random_state)
@@ -97,6 +103,8 @@ class RandomForestPrediction(BasePrediction):
 
 
 class GradientBoostingPrediction(BasePrediction):
+    ml_algorithm = "GradientBoostingDecisionTree"
+
     def _create_regression_model(self) -> GradientBoostingRegressor:
         self._preprocess()
         regressor = GradientBoostingRegressor(random_state=self.random_state)
@@ -105,6 +113,8 @@ class GradientBoostingPrediction(BasePrediction):
 
 
 class DecisionTreePrediction(BasePrediction):
+    ml_algorithm = "DecisionTree"
+
     def _create_regression_model(self) -> DecisionTreeRegressor:
         self._preprocess()
         regressor = DecisionTreeRegressor(random_state=self.random_state)
@@ -113,6 +123,8 @@ class DecisionTreePrediction(BasePrediction):
 
 
 class LogisticRegressionPrediction(BasePrediction):
+    ml_algorithm = "LogisticRegression"
+
     def _create_regression_model(self) -> LogisticRegression:
         self._preprocess()
         logistic_regression = LogisticRegression(
