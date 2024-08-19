@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeRegressor
 
 from ml_dcs.domain.ml import MLResult
+from ml_dcs.internal.graph.graph import FixedOrderFormatter
 
 DEFAULT_RANDOM_STATE = 42
 
@@ -74,11 +75,41 @@ class BasePrediction:
         mae = mean_absolute_error(self.y_test, predicted)
         return MLResult(r2_score=r2, mae=mae)
 
-    def plt_show(self):
+    def plt_show(
+        self,
+        xlim: Optional[Tuple[float]] = None,
+        ylim: Optional[Tuple[float]] = None,
+        unit: Optional[str] = None,
+    ):
         predicted = self.predict()
-        plt.xlabel("predicted")
-        plt.ylabel("actual")
-        plt.scatter(predicted, self.y_test)
+
+        if unit is None:
+            plt.xlabel("Predicted values")
+        else:
+            plt.xlabel("Predicted values ({})".format(unit))
+
+        if unit is None:
+            plt.ylabel("Actual values")
+        else:
+            plt.ylabel("Actual values ({})".format(unit))
+
+        if xlim is not None:
+            plt.xlim(*xlim)
+        if ylim is not None:
+            plt.ylim(*ylim)
+
+        ax = plt.gca()
+        ax.xaxis.set_major_formatter(FixedOrderFormatter(order_of_mag=6))
+        ax.yaxis.set_major_formatter(FixedOrderFormatter(order_of_mag=6))
+        ax.ticklabel_format(style="sci", axis="both", scilimits=(0, 0))
+
+        ax.scatter(
+            predicted,
+            self.y_test,
+            c="white",
+            edgecolors="blue",
+            s=10,
+        )
         plt.show()
 
 

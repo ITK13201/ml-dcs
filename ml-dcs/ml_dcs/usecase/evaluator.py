@@ -1,7 +1,7 @@
 import operator
 import time
 from statistics import variance
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -119,3 +119,20 @@ class RandomStateEvaluator:
                 self.mae_scores,
             ) = self._execute_with_multiple_random_states()
         return self.r2_scores, self.mae_scores
+
+    def plt_show_at_best_accuracy(
+        self,
+        xlim: Optional[Tuple[float]] = None,
+        ylim: Optional[Tuple[float]] = None,
+        unit: Optional[str] = None,
+    ):
+        if self.r2_scores is None or self.mae_scores is None:
+            (
+                self.r2_scores,
+                self.mae_scores,
+            ) = self._execute_with_multiple_random_states()
+
+        util = MTSADataUtil(input_dir_path=self.input_dir_path)
+        df = util.get_dataframe(ml_input_class=self.ml_input_class)
+        prediction = self.prediction_class(df, self.best_random_state)
+        prediction.plt_show(xlim=xlim, ylim=ylim, unit=unit)
