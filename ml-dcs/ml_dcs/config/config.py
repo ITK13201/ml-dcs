@@ -36,7 +36,7 @@ config.dictConfig(LOGGING)
 # ===
 # MATPLOTLIB
 # ===
-plt.rcParams["font.size"] = 12
+plt.rcParams["font.size"] = 14
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["xtick.direction"] = "in"
 plt.rcParams["ytick.direction"] = "in"

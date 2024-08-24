@@ -108,7 +108,7 @@ class BasePrediction:
             self.y_test,
             c="white",
             edgecolors="blue",
-            s=10,
+            s=50,
         )
         plt.show()
 
