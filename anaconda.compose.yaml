@@ -1,9 +1,9 @@
 services:
-  cuda:
+  anaconda:
     platform: linux/x86_64
     build:
       context: .
-      dockerfile: ./docker/cuda/Dockerfile
+      dockerfile: ./docker/anaconda/Dockerfile
     volumes:
       - ./ml-dcs:/usr/local/src/ml-dcs
     ports:
@@ -12,10 +12,3 @@ services:
     environment:
       PORT: "8000"
       TZ: "Asia/Tokyo"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
