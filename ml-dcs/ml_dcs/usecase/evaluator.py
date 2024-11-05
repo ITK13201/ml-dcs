@@ -1,7 +1,7 @@
 import operator
 import time
 from statistics import variance
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -15,7 +15,7 @@ from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
 
 
 class RandomStateEvaluator:
-    random_states = [i for i in range(0, 3000, 1)]
+    random_states = [i for i in range(0, 3000, 10)]
 
     def __init__(self, input_dir_path: str, ml_input_class, prediction_class):
         self.input_dir_path = input_dir_path

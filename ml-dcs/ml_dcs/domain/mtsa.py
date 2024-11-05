@@ -3,11 +3,11 @@ from typing import List
 
 from pydantic import (
     BaseModel,
+    ByteSize,
     ConfigDict,
     Field,
-    ByteSize,
-    field_validator,
     TypeAdapter,
+    field_validator,
 )
 from pydantic.alias_generators import to_camel
 

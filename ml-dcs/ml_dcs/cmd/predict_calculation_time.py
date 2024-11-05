@@ -4,19 +4,20 @@ import logging
 import os
 from datetime import datetime
 
+from ml_dcs.cmd.base import BaseCommand
 from ml_dcs.domain.ml import MLCalculationTimePredictionInput2
 from ml_dcs.internal.ml.prediction_methods import (
-    GradientBoostingPrediction,
-    RandomForestPrediction,
     DecisionTreePrediction,
+    GradientBoostingPrediction,
     LogisticRegressionPrediction,
+    RandomForestPrediction,
 )
 from ml_dcs.usecase.evaluator import RandomStateEvaluator
 
 logger = logging.getLogger(__name__)
 
 
-class PredictCalculationTimeCommand:
+class PredictCalculationTimeCommand(BaseCommand):
     name = "predict_calculation_time"
     help = "Predict calculation time"
 

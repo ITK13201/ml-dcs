@@ -4,19 +4,20 @@ import logging
 import os
 from datetime import datetime
 
+from ml_dcs.cmd.base import BaseCommand
 from ml_dcs.domain.ml import MLMemoryUsagePredictionInput2
 from ml_dcs.internal.ml.prediction_methods import (
-    GradientBoostingPrediction,
-    RandomForestPrediction,
     DecisionTreePrediction,
+    GradientBoostingPrediction,
     LogisticRegressionPrediction,
+    RandomForestPrediction,
 )
 from ml_dcs.usecase.evaluator import RandomStateEvaluator
 
 logger = logging.getLogger(__name__)
 
 
-class PredictMemoryUsageCommand:
+class PredictMemoryUsageCommand(BaseCommand):
     name = "predict_memory_usage"
     help = "Predict memory usage"
 
