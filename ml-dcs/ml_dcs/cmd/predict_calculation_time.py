@@ -12,7 +12,7 @@ from ml_dcs.internal.ml.prediction_methods import (
     LogisticRegressionPrediction,
     RandomForestPrediction,
 )
-from ml_dcs.usecase.evaluator import RandomStateEvaluator
+from ml_dcs.usecases.evaluator import RandomStateEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,9 @@ class PredictCalculationTimeCommand(BaseCommand):
         )
         parser.add_argument(
             "-o", "--output-dir", type=str, required=True, help="Output data directory"
+
+        parser.add_argument(
+            "-m", "--mode", type=str, required=True, help="Prediction mode (simple/gnn)"
         )
 
     def execute(self, args: argparse.Namespace):

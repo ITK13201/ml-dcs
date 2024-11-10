@@ -12,7 +12,7 @@ from ml_dcs.internal.ml.prediction_methods import (
     LogisticRegressionPrediction,
     RandomForestPrediction,
 )
-from ml_dcs.usecase.evaluator import RandomStateEvaluator
+from ml_dcs.usecases.evaluator import RandomStateEvaluator
 
 logger = logging.getLogger(__name__)
 
