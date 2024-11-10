@@ -11,7 +11,7 @@ usage() {
     echo "Usage: $0 [-d] [-q]" 1>&2
     echo "Options: " 1>&2
     echo "-d: Run as development mode" 1>&2
-    echo "-q: Quit without running server" 1>&2
+    echo "-q: Quit" 1>&2
     exit 1
 }
 
