@@ -24,6 +24,13 @@ class PredictCalculationTimeCommand(BaseCommand):
             "-o", "--output-dir", type=str, required=True, help="Output data directory"
         )
         parser.add_argument(
+            "-f",
+            "--bench-result-file",
+            type=str,
+            required=True,
+            help="Bench result file path",
+        )
+        parser.add_argument(
             "-m", "--mode", type=str, required=True, help="Prediction mode (simple/gnn)"
         )
 
@@ -31,6 +38,7 @@ class PredictCalculationTimeCommand(BaseCommand):
         super().__init__()
         self.input_dir = ""
         self.output_dir = ""
+        self.bench_result_file_path = ""
         self.mode = ""
 
     def execute(self, args: argparse.Namespace):
@@ -38,16 +46,17 @@ class PredictCalculationTimeCommand(BaseCommand):
 
         self.input_dir = args.input_dir
         self.output_dir = args.output_dir
+        self.bench_result_file_path = args.bench_result_file
         self.mode = args.mode
 
         match self.mode:
             case "simple":
                 PredictCalculationTimeSimpleExecutor(
-                    self.input_dir, self.output_dir
+                    self.input_dir, self.output_dir, self.bench_result_file_path
                 ).execute()
             case "gnn":
                 PredictCalculationTimeGNNExecutor(
-                    self.input_dir, self.output_dir
+                    self.input_dir, self.output_dir, self.bench_result_file_path
                 ).execute()
             case _:
                 raise RuntimeError("Invalid mode")

@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class PredictMemoryUsageSimpleExecutor:
-    def __init__(self, input_dir: str, output_dir: str):
+    def __init__(self, input_dir: str, output_dir: str, bench_result_file_path: str):
         self.input_dir = input_dir
         self.output_dir = output_dir
+        self.bench_result_file_path = bench_result_file_path
         self.mode = "simple"
 
     def execute(self):
@@ -43,7 +44,6 @@ class PredictMemoryUsageSimpleExecutor:
         logger.info("LR started")
         self._predict_using_lr(self.input_dir, self.output_dir)
         logger.info("LR finished")
-
 
     def _get_output_file_name(self, ml_algorithm: str) -> str:
         return (

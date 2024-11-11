@@ -7,6 +7,7 @@ import pandas as pd
 
 from ml_dcs.domain.ml import BaseMLInput
 from ml_dcs.domain.mtsa import MTSAResult
+from ml_dcs.domain.mtsa_bench import MTSABenchResult
 
 logger = getLogger(__name__)
 
@@ -35,3 +36,16 @@ class MTSADataUtil:
             input_model = ml_input_class.init_by_mtsa_result(parsed)
             data.append(input_model.model_dump())
         return pd.json_normalize(data)
+
+
+class MTSABenchDataUtil:
+    def __init__(self, bench_result_file_path: str):
+        self.bench_result_file_path = bench_result_file_path
+
+    def _load_data(self) -> dict:
+        with open(self.bench_result_file_path, mode="r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+
+    def _parse_data(self) -> MTSABenchResult:
+        return MTSABenchResult(**self._load_data())

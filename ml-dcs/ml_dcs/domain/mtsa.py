@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
-from typing import List
+from distutils.util import strtobool
+from typing import Dict, List
 
+import scipy.stats
 from pydantic import (
     BaseModel,
     ByteSize,
@@ -21,8 +23,20 @@ class MTSAResultInitialModelsEnvironment(BaseModel):
     number_of_transitions: int
     number_of_controllable_actions: int
     number_of_uncontrollable_actions: int
+    structure: List[List[str]]
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._quantified_structure: List[List[int]] | None = None
+
+    @property
+    def quantified_structure(self) -> List[List[int]]:
+        if self._quantified_structure is None:
+            raise RuntimeError("qualified_structure not initialized")
+        else:
+            return self._quantified_structure
 
 
 class MTSAResultInitialModelsRequirement(BaseModel):
@@ -31,8 +45,20 @@ class MTSAResultInitialModelsRequirement(BaseModel):
     number_of_transitions: int
     number_of_controllable_actions: int
     number_of_uncontrollable_actions: int
+    structure: List[List[str]]
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._quantified_structure: List[List[int]] | None = None
+
+    @property
+    def quantified_structure(self) -> List[List[int]]:
+        if self._quantified_structure is None:
+            raise RuntimeError("quantified_structure not initialized")
+        else:
+            return self._quantified_structure
 
 
 # ===
@@ -80,12 +106,14 @@ class MTSAResultCompileStepFinalModel(BaseModel):
 # classes by MTSAResultComposeStep
 # ===
 class MTSAResultComposeStepCreatingGameSpace(BaseModel):
-    number_of_max_states: int
-    number_of_states: int
-    number_of_transitions: int
-    number_of_controllable_actions: int
-    number_of_uncontrollable_actions: int
-    compose_duration: timedelta = Field(alias="composeDuration [ms]")
+    number_of_max_states: int | None = None
+    number_of_states: int | None = None
+    number_of_transitions: int | None = None
+    number_of_controllable_actions: int | None = None
+    number_of_uncontrollable_actions: int | None = None
+    compose_duration: timedelta | None = Field(
+        alias="composeDuration [ms]", default=None
+    )
     source_models: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
@@ -97,13 +125,17 @@ class MTSAResultComposeStepCreatingGameSpace(BaseModel):
 
 
 class MTSAResultComposeStepSolvingProblem(BaseModel):
-    number_of_max_states: int
-    number_of_states: int
-    number_of_transitions: int
-    number_of_controllable_actions: int
-    number_of_uncontrollable_actions: int
-    compose_duration: timedelta = Field(alias="composeDuration [ms]")
-    solving_duration: timedelta = Field(alias="solvingDuration [ms]")
+    number_of_max_states: int | None = None
+    number_of_states: int | None = None
+    number_of_transitions: int | None = None
+    number_of_controllable_actions: int | None = None
+    number_of_uncontrollable_actions: int | None = None
+    compose_duration: timedelta | None = Field(
+        alias="composeDuration [ms]", default=None
+    )
+    solving_duration: timedelta | None = Field(
+        alias="solvingDuration [ms]", default=None
+    )
     source_models: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
@@ -140,6 +172,7 @@ class MTSAResultInitialModels(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # simple
         self._number_of_models_of_environments = None
         self._max_number_of_states_of_environments = None
         self._sum_of_number_of_transitions_of_environments = None
@@ -150,6 +183,9 @@ class MTSAResultInitialModels(BaseModel):
         self._sum_of_number_of_transitions_of_requirements = None
         self._sum_of_number_of_controllable_actions_of_requirements = None
         self._sum_of_number_of_uncontrollable_actions_of_requirements = None
+        # gnn
+        self._actions = None
+        self._weight_by_action = None
 
     @property
     def number_of_models_of_environments(self) -> int:
@@ -234,6 +270,67 @@ class MTSAResultInitialModels(BaseModel):
                 result += requirement.number_of_uncontrollable_actions
             self._sum_of_number_of_uncontrollable_actions_of_requirements = result
         return self._sum_of_number_of_uncontrollable_actions_of_requirements
+
+    @property
+    def actions(self) -> List[str]:
+        if self._actions is None:
+            actions_set = set()
+            for environment in self.environments:
+                for transition in environment.structure:
+                    action_name = transition[2]
+                    actions_set.add(action_name)
+            for requirement in self.requirements:
+                for transition in requirement.structure:
+                    action_name = transition[2]
+                    actions_set.add(action_name)
+            self._actions = list(actions_set)
+            return self._actions
+        else:
+            return self._actions
+
+    @property
+    def weight_by_action(self) -> Dict[str, float]:
+        if self._weight_by_action is None:
+            labeled_weights = [index + 1 for index, action in enumerate(self.actions)]
+            normalized_weights: List[float] = list(scipy.stats.zscore(labeled_weights))
+            data = {}
+            for index, weight in enumerate(normalized_weights):
+                data[self.actions[index]] = weight
+            self._weight_by_action = data
+            return self._weight_by_action
+        else:
+            return self._weight_by_action
+
+    def initialize_quantified_structures(self):
+        for environment in self.environments:
+            normalized_structure = []
+            for transition in environment.structure:
+                (src_state_number, dst_state_number, action_name, is_controllable) = (
+                    transition
+                )
+                normalized_transition = [
+                    int(src_state_number),
+                    int(dst_state_number),
+                    self.weight_by_action[action_name],
+                    strtobool(is_controllable),
+                ]
+                normalized_structure.append(normalized_transition)
+            environment._quantified_structure = normalized_structure
+
+        for requirement in self.requirements:
+            normalized_structure = []
+            for transition in requirement.structure:
+                (src_state_number, dst_state_number, action_name, is_controllable) = (
+                    transition
+                )
+                normalized_transition = [
+                    int(src_state_number),
+                    int(dst_state_number),
+                    self.weight_by_action[action_name],
+                    strtobool(is_controllable),
+                ]
+                normalized_structure.append(normalized_transition)
+            requirement._quantified_structure = normalized_structure
 
 
 class MTSAResultCompileStep(BaseModel):
