@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/pytorch/Dockerfile
+      target: development
     volumes:
       - ./ml-dcs:/usr/local/src/ml-dcs
     ports:
