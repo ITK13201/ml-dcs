@@ -55,7 +55,7 @@ class GNNEvaluator:
 
                 total_loss += loss.item()
             loss_average = total_loss / length
-            logger.info(f"Epoch {epoch}/{self.epochs}, Loss Average: {loss_average}")
+            logger.info(f"Epoch {epoch+1}/{self.epochs}, Loss Average: {loss_average}")
 
     def test(self, testing_dataset):
         self.lts_gnn_model.eval().to(DEVICE)
@@ -68,7 +68,16 @@ class GNNEvaluator:
                 prediction = self.regression_model(lts_set_embedding)
                 prediction = torch.mean(prediction).to(DEVICE)
                 loss = F.mse_loss(prediction, target)
-                logger.info("Test result: %s", json.dumps({"loss": loss.item(), "actual": str(target.item()), "predicted": "{:.4f}".format(prediction.item())}))
+                logger.info(
+                    "Test result: %s",
+                    json.dumps(
+                        {
+                            "loss": loss.item(),
+                            "actual": str(target.item()),
+                            "predicted": "{:.4f}".format(prediction.item()),
+                        }
+                    ),
+                )
                 total_loss += loss
 
             loss_average = total_loss / length
