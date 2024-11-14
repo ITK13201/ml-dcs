@@ -1,9 +1,9 @@
 services:
-  cuda:
+  pytorch:
     platform: linux/x86_64
     build:
       context: .
-      dockerfile: ./docker/cuda/Dockerfile
+      dockerfile: ./docker/pytorch/Dockerfile
     volumes:
       - ./ml-dcs:/usr/local/src/ml-dcs
     ports:

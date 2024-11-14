@@ -2,6 +2,7 @@ import argparse
 from typing import Type
 
 from ml_dcs.cmd.base import BaseCommand
+from ml_dcs.cmd.check_gpu import CheckGPUCommand
 from ml_dcs.cmd.predict_calculation_time import PredictCalculationTimeCommand
 from ml_dcs.cmd.predict_memory_usage import PredictMemoryUsageCommand
 from ml_dcs.cmd.try_sample import TrySampleCommand
@@ -22,6 +23,7 @@ class RootCommand:
         self.add_command(TrySampleCommand)
         self.add_command(PredictCalculationTimeCommand)
         self.add_command(PredictMemoryUsageCommand)
+        self.add_command(CheckGPUCommand)
 
     def execute(self):
         args = self.parser.parse_args()

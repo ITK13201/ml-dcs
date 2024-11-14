@@ -1,5 +1,6 @@
 from logging import config
 
+import torch
 from matplotlib import pyplot as plt
 
 # ===
@@ -47,3 +48,8 @@ plt.rcParams["legend.markerscale"] = 2
 plt.rcParams["legend.fancybox"] = False
 plt.rcParams["legend.framealpha"] = 1
 plt.rcParams["legend.edgecolor"] = "black"
+
+# ===
+# PyTorch
+# ===
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

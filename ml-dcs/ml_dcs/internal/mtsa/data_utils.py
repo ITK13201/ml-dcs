@@ -1,7 +1,7 @@
 import json
 import os
 from logging import getLogger
-from typing import Iterator, Type
+from typing import Iterator, Type, List, Tuple
 
 import pandas as pd
 
@@ -24,15 +24,16 @@ class MTSADataUtil:
                         data = json.load(f)
                         yield data
 
-    def _parse_data(self) -> Iterator[MTSAResult]:
-        dict_dataset = self._load_data()
-        for dict_data in dict_dataset:
+    def get_parsed_data(self) -> List[MTSAResult]:
+        data = []
+        for dict_data in  self._load_data():
             mtsa_result = MTSAResult(**dict_data)
-            yield mtsa_result
+            data.append(mtsa_result)
+        return data
 
     def get_dataframe(self, ml_input_class: Type[BaseMLInput]) -> pd.DataFrame:
         data = []
-        for parsed in self._parse_data():
+        for parsed in self.get_parsed_data():
             input_model = ml_input_class.init_by_mtsa_result(parsed)
             data.append(input_model.model_dump())
         return pd.json_normalize(data)

@@ -3,7 +3,7 @@
 set -eu
 
 APP=ml-dcs
-ANACONDA_BIN=/home/${APP}/.conda/envs/${APP}/bin
+ANACONDA_BIN=/opt/conda/bin
 EXEC_JUPYTER_LAB=${ANACONDA_BIN}/jupyter-lab
 EXEC_PYTHON=${ANACONDA_BIN}/python
 

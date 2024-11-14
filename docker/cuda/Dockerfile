@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.6.2-cudnn-runtime-ubuntu24.04
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
 ARG APP=ml-dcs
 WORKDIR /usr/local/src/${APP}
@@ -8,7 +8,8 @@ RUN apt-get update -y \
         sudo \
         wget \
         vim \
-        curl
+        curl \
+        less
 
 # Install anaconda
 ARG ANACONDA_INSTALLER_VERSION=2024.10-1

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from distutils.util import strtobool
 from typing import Dict, List
 
 import scipy.stats
@@ -12,6 +11,7 @@ from pydantic import (
     field_validator,
 )
 from pydantic.alias_generators import to_camel
+from sklearn import preprocessing
 
 
 # ===
@@ -25,7 +25,7 @@ class MTSAResultInitialModelsEnvironment(BaseModel):
     number_of_uncontrollable_actions: int
     structure: List[List[str]]
 
-    model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_camel)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,6 +38,10 @@ class MTSAResultInitialModelsEnvironment(BaseModel):
         else:
             return self._quantified_structure
 
+    @quantified_structure.setter
+    def quantified_structure(self, value: List[List[int]]):
+        self._quantified_structure = value
+
 
 class MTSAResultInitialModelsRequirement(BaseModel):
     name: str
@@ -47,7 +51,7 @@ class MTSAResultInitialModelsRequirement(BaseModel):
     number_of_uncontrollable_actions: int
     structure: List[List[str]]
 
-    model_config = ConfigDict(frozen=True, alias_generator=to_camel)
+    model_config = ConfigDict(alias_generator=to_camel)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -59,6 +63,10 @@ class MTSAResultInitialModelsRequirement(BaseModel):
             raise RuntimeError("quantified_structure not initialized")
         else:
             return self._quantified_structure
+
+    @quantified_structure.setter
+    def quantified_structure(self, value: List[List[int]]):
+        self._quantified_structure = value
 
 
 # ===
@@ -186,6 +194,7 @@ class MTSAResultInitialModels(BaseModel):
         # gnn
         self._actions = None
         self._weight_by_action = None
+        self._max_number_of_transitions = None
 
     @property
     def number_of_models_of_environments(self) -> int:
@@ -291,8 +300,8 @@ class MTSAResultInitialModels(BaseModel):
     @property
     def weight_by_action(self) -> Dict[str, float]:
         if self._weight_by_action is None:
-            labeled_weights = [index + 1 for index, action in enumerate(self.actions)]
-            normalized_weights: List[float] = list(scipy.stats.zscore(labeled_weights))
+            labeled_weights = [index for index, action in enumerate(self.actions)]
+            normalized_weights: List[float] = list(preprocessing.minmax_scale(labeled_weights))
             data = {}
             for index, weight in enumerate(normalized_weights):
                 data[self.actions[index]] = weight
@@ -312,10 +321,10 @@ class MTSAResultInitialModels(BaseModel):
                     int(src_state_number),
                     int(dst_state_number),
                     self.weight_by_action[action_name],
-                    strtobool(is_controllable),
+                    int(is_controllable),
                 ]
                 normalized_structure.append(normalized_transition)
-            environment._quantified_structure = normalized_structure
+            environment.quantified_structure = normalized_structure
 
         for requirement in self.requirements:
             normalized_structure = []
@@ -327,11 +336,24 @@ class MTSAResultInitialModels(BaseModel):
                     int(src_state_number),
                     int(dst_state_number),
                     self.weight_by_action[action_name],
-                    strtobool(is_controllable),
+                    int(is_controllable),
                 ]
                 normalized_structure.append(normalized_transition)
-            requirement._quantified_structure = normalized_structure
+            requirement.quantified_structure = normalized_structure
 
+    @property
+    def max_number_of_transitions(self):
+        if self._max_number_of_transitions is None:
+            self._max_number_of_transitions = -1
+            for environment in self.environments:
+                number_of_transitions = environment.number_of_transitions
+                self._max_number_of_transitions = max(number_of_transitions, self._max_number_of_transitions)
+            for requirement in self.requirements:
+                number_of_transitions = requirement.number_of_transitions
+                self._max_number_of_transitions = max(number_of_transitions, self._max_number_of_transitions)
+            return self._max_number_of_transitions
+        else:
+            return self._max_number_of_transitions
 
 class MTSAResultCompileStep(BaseModel):
     environments: List[MTSAResultCompileStepEnvironment] = Field(default_factory=list)
@@ -514,3 +536,6 @@ class MTSAResult(BaseModel):
     @property
     def significant_duration_ms(self) -> float:
         return self.significant_duration / timedelta(milliseconds=1)
+
+    def initialize_quantified_structures(self):
+        self.initial_models.initialize_quantified_structures()
