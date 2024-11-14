@@ -11,7 +11,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "[%(levelname)s] %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
+            "format": "[%(levelname)s] %(asctime)s %(name)s:%(lineno)s %(funcName)s %(module)s %(process)d %(thread)d: %(message)s"
         },
     },
     "handlers": {
@@ -21,6 +21,12 @@ LOGGING = {
             "formatter": "verbose",
             "stream": "ext://sys.stdout",
         },
+        "file": {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "verbose",
+            "filename": "ml-dcs.log",
+        },
     },
     "loggers": {
         "__main__": {
@@ -28,7 +34,7 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "": {"level": "INFO", "handlers": ["console"], "propagate": False},
+        "": {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
     },
 }
 
@@ -53,3 +59,4 @@ plt.rcParams["legend.edgecolor"] = "black"
 # PyTorch
 # ===
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("PyTorch Device: {}".format(str(DEVICE)))
