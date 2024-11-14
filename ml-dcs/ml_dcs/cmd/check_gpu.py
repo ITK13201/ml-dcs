@@ -6,6 +6,8 @@ import torch
 from ml_dcs.cmd.base import BaseCommand
 
 logger = logging.getLogger(__name__)
+
+
 class CheckGPUCommand(BaseCommand):
     name = "check_gpu"
     help = "Check GPU"

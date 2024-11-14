@@ -1,7 +1,7 @@
 import json
 import os
 from logging import getLogger
-from typing import Iterator, Type, List, Tuple
+from typing import Iterator, List, Tuple, Type
 
 import pandas as pd
 
@@ -26,7 +26,7 @@ class MTSADataUtil:
 
     def get_parsed_data(self) -> List[MTSAResult]:
         data = []
-        for dict_data in  self._load_data():
+        for dict_data in self._load_data():
             mtsa_result = MTSAResult(**dict_data)
             data.append(mtsa_result)
         return data

@@ -301,7 +301,9 @@ class MTSAResultInitialModels(BaseModel):
     def weight_by_action(self) -> Dict[str, float]:
         if self._weight_by_action is None:
             labeled_weights = [index for index, action in enumerate(self.actions)]
-            normalized_weights: List[float] = list(preprocessing.minmax_scale(labeled_weights))
+            normalized_weights: List[float] = list(
+                preprocessing.minmax_scale(labeled_weights)
+            )
             data = {}
             for index, weight in enumerate(normalized_weights):
                 data[self.actions[index]] = weight
@@ -347,13 +349,18 @@ class MTSAResultInitialModels(BaseModel):
             self._max_number_of_transitions = -1
             for environment in self.environments:
                 number_of_transitions = environment.number_of_transitions
-                self._max_number_of_transitions = max(number_of_transitions, self._max_number_of_transitions)
+                self._max_number_of_transitions = max(
+                    number_of_transitions, self._max_number_of_transitions
+                )
             for requirement in self.requirements:
                 number_of_transitions = requirement.number_of_transitions
-                self._max_number_of_transitions = max(number_of_transitions, self._max_number_of_transitions)
+                self._max_number_of_transitions = max(
+                    number_of_transitions, self._max_number_of_transitions
+                )
             return self._max_number_of_transitions
         else:
             return self._max_number_of_transitions
+
 
 class MTSAResultCompileStep(BaseModel):
     environments: List[MTSAResultCompileStepEnvironment] = Field(default_factory=list)

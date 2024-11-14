@@ -1,21 +1,18 @@
 import logging
 from typing import List
 
+import torch.nn.functional as F
 import torch.optim
 
 from ml_dcs.config.config import DEVICE
-from ml_dcs.internal.ml.gnn_complex import LTSGNN, LTSRegressionModel, GNNDataUtil
+from ml_dcs.internal.ml.gnn_complex import LTSGNN, GNNDataUtil, LTSRegressionModel
 from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
-
-import torch.nn.functional as F
 
 logger = logging.getLogger(__name__)
 
+
 class GNNEvaluator:
-    ALLOWED_TARGET_NAMES: List[str] = [
-        "calculation_time",
-        "memory_usage"
-    ]
+    ALLOWED_TARGET_NAMES: List[str] = ["calculation_time", "memory_usage"]
 
     def __init__(self, input_dir_path: str, epochs: int, target_name: str):
         # args
@@ -29,7 +26,11 @@ class GNNEvaluator:
         # basic parameters
         self.lts_gnn_model = LTSGNN().to(DEVICE)
         self.regression_model = LTSRegressionModel().to(DEVICE)
-        self.optimizer = torch.optim.Adam(list(self.lts_gnn_model.parameters()) + list(self.regression_model.parameters()), lr=0.001)
+        self.optimizer = torch.optim.Adam(
+            list(self.lts_gnn_model.parameters())
+            + list(self.regression_model.parameters()),
+            lr=0.001,
+        )
 
     def train(self, training_dataset):
         for epoch in range(self.epochs):
@@ -52,7 +53,9 @@ class GNNEvaluator:
                 logger.info(f"Epoch {epoch + 1}/{self.epochs}, Loss: {loss.item()}")
 
                 total_loss += loss.item()
-            logger.info(f"[+] Epoch {epoch + 1}/{self.epochs}, Total Loss: {total_loss}")
+            logger.info(
+                f"[+] Epoch {epoch + 1}/{self.epochs}, Total Loss: {total_loss}"
+            )
 
     def test(self, testing_dataset):
         self.lts_gnn_model.eval()
@@ -66,7 +69,6 @@ class GNNEvaluator:
 
                 total_loss += loss
             logger.info(f"Total Loss: {total_loss}")
-
 
     def evaluate(self):
         mtsa_data_util = MTSADataUtil(self.input_dir_path)

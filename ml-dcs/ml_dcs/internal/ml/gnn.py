@@ -4,28 +4,26 @@ import logging
 from typing import Iterator, List
 
 import torch
+import torch.nn.functional as F
 from torch_geometric.data import Data
 from torch_geometric.loader.dataloader import DataLoader
 from torch_geometric.nn import GCNConv, global_mean_pool
-import torch.nn.functional as F
 
 from ml_dcs.config.config import DEVICE
 from ml_dcs.domain.mtsa import MTSAResult
 
 logger = logging.getLogger(__name__)
 
+
 class GNNDataUtil:
-    ALLOWED_TARGET_NAMES: List[str] = [
-        "calculation_time",
-        "memory_usage"
-    ]
+    ALLOWED_TARGET_NAMES: List[str] = ["calculation_time", "memory_usage"]
+
     def __init__(self, mtsa_results: Iterator[MTSAResult], target_name: str):
         self.mtsa_results = mtsa_results
         if target_name in self.ALLOWED_TARGET_NAMES:
             self.target_name = target_name
         else:
             raise ValueError(f"Target name {target_name} not allowed")
-
 
     def get_lts_set_graph(self, mtsa_result: MTSAResult) -> Data:
         match self.target_name:
@@ -43,43 +41,61 @@ class GNNDataUtil:
         max_node_size = -1
         environment_count = 0
         for environment in mtsa_result.initial_models.environments:
-            node_feature = torch.tensor(environment.quantified_structure, dtype=torch.float).to(DEVICE)
+            node_feature = torch.tensor(
+                environment.quantified_structure, dtype=torch.float
+            ).to(DEVICE)
             max_node_size = max(max_node_size, len(node_feature))
             node_features.append(node_feature)
             environment_count += 1
         requirement_count = environment_count
         for requirement in mtsa_result.initial_models.requirements:
-            node_feature = torch.tensor(requirement.quantified_structure, dtype=torch.float).to(DEVICE)
+            node_feature = torch.tensor(
+                requirement.quantified_structure, dtype=torch.float
+            ).to(DEVICE)
             max_node_size = max(max_node_size, len(node_feature))
             node_features.append(node_feature)
             requirement_count += 1
 
         padded_node_features = []
         for node_feature in node_features:
-            padded_node_feature = torch.cat([node_feature, torch.zeros(max_node_size - len(node_feature), 4).to(DEVICE)], dim=0).to(DEVICE)
+            padded_node_feature = torch.cat(
+                [
+                    node_feature,
+                    torch.zeros(max_node_size - len(node_feature), 4).to(DEVICE),
+                ],
+                dim=0,
+            ).to(DEVICE)
             padded_node_features.append(padded_node_feature)
-        padded_node_features_tensor = torch.stack(padded_node_features, dim=0).to(DEVICE)
+        padded_node_features_tensor = torch.stack(padded_node_features, dim=0).to(
+            DEVICE
+        )
 
         environment_node_numbers = list(range(0, environment_count))
         requirement_node_numbers = list(range(environment_count, requirement_count))
 
         edge_index = []
         edge_weight = []
-        environment_node_combinations = itertools.combinations(environment_node_numbers, 2)
+        environment_node_combinations = itertools.combinations(
+            environment_node_numbers, 2
+        )
         for environment_node_combination in environment_node_combinations:
             # undirected graph
             edge_index.append(environment_node_combination)
             edge_weight.append(0)
             edge_index.append(reversed(environment_node_combination))
             edge_weight.append(0)
-        requirement_node_combinations = itertools.combinations(requirement_node_numbers, 2)
+        requirement_node_combinations = itertools.combinations(
+            requirement_node_numbers, 2
+        )
         for requirement_node_combination in requirement_node_combinations:
             # undirected graph
             edge_index.append(requirement_node_combination)
             edge_weight.append(1)
             edge_index.append(reversed(requirement_node_combination))
             edge_weight.append(1)
-        product_of_environments_and_requirements = itertools.product(environment_node_numbers, requirement_node_numbers)
+        product_of_environments_and_requirements = itertools.product(
+            environment_node_numbers, requirement_node_numbers
+        )
         for combination in product_of_environments_and_requirements:
             # undirected graph
             edge_index.append(combination)
@@ -88,10 +104,17 @@ class GNNDataUtil:
             edge_weight.append(2)
 
         target_tensor = torch.tensor([target], dtype=torch.float).to(DEVICE)
-        edge_index_tensor = torch.tensor(edge_index, dtype=torch.int).t().contiguous().to(DEVICE)
+        edge_index_tensor = (
+            torch.tensor(edge_index, dtype=torch.int).t().contiguous().to(DEVICE)
+        )
         edge_weight_tensor = torch.tensor(edge_weight, dtype=torch.float).to(DEVICE)
 
-        lts_set_graph = Data(x=padded_node_features_tensor, edge_index=edge_index_tensor, edge_weight=edge_weight_tensor, y=target_tensor).to(DEVICE)
+        lts_set_graph = Data(
+            x=padded_node_features_tensor,
+            edge_index=edge_index_tensor,
+            edge_weight=edge_weight_tensor,
+            y=target_tensor,
+        ).to(DEVICE)
         return lts_set_graph
 
     def get_dataloader(self) -> DataLoader:
@@ -116,7 +139,12 @@ class GCNRegression(torch.nn.Module):
         self.fc1 = torch.nn.Linear(self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS)
 
     def forward(self, data: Data):
-        x, edge_index, edge_weight, batch = data.x, data.edge_index, data.edge_weight, data.batch
+        x, edge_index, edge_weight, batch = (
+            data.x,
+            data.edge_index,
+            data.edge_weight,
+            data.batch,
+        )
 
         # 1st graph convolution
         x = self.conv1(x=x, edge_index=edge_index, edge_weight=edge_weight)
