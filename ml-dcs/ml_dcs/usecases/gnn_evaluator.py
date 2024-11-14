@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import List
 
@@ -37,6 +38,7 @@ class GNNEvaluator:
             self.lts_gnn_model.train().to(DEVICE)
             self.regression_model.train().to(DEVICE)
             total_loss = 0
+            length = len(training_dataset)
             for lts_set_graph, target in training_dataset:
                 self.optimizer.zero_grad()
                 # get LTS set embedding
@@ -50,25 +52,27 @@ class GNNEvaluator:
                 loss = F.mse_loss(output, target)
                 loss.backward()
                 self.optimizer.step()
-                logger.info(f"Epoch {epoch + 1}/{self.epochs}, Loss: {loss.item()}")
 
                 total_loss += loss.item()
-            logger.info(
-                f"[+] Epoch {epoch + 1}/{self.epochs}, Total Loss: {total_loss}"
-            )
+            loss_average = total_loss / length
+            logger.info(f"Epoch {epoch}/{self.epochs}, Loss Average: {loss_average}")
 
     def test(self, testing_dataset):
-        self.lts_gnn_model.eval()
-        self.regression_model.eval()
+        self.lts_gnn_model.eval().to(DEVICE)
+        self.regression_model.eval().to(DEVICE)
         with torch.no_grad():
             total_loss = 0
+            length = len(testing_dataset)
             for lts_set_graph, target in testing_dataset:
-                prediction = self.lts_gnn_model(lts_set_graph)
+                lts_set_embedding = self.lts_gnn_model(lts_set_graph)
+                prediction = self.regression_model(lts_set_embedding)
+                prediction = torch.mean(prediction).to(DEVICE)
                 loss = F.mse_loss(prediction, target)
-                logger.info(f"Loss: {loss.item()}")
-
+                logger.info("Test result: %s", json.dumps({"loss": loss.item(), "actual": str(target.item()), "predicted": "{:.4f}".format(prediction.item())}))
                 total_loss += loss
-            logger.info(f"Total Loss: {total_loss}")
+
+            loss_average = total_loss / length
+            logger.info("[+] Loss Average: {}".format(loss_average))
 
     def evaluate(self):
         mtsa_data_util = MTSADataUtil(self.input_dir_path)
