@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim
 
 from ml_dcs.config.config import DEVICE
-from ml_dcs.internal.ml.gnn_complex import LTSGNN, GNNDataUtil, LTSRegressionModel
+from ml_dcs.internal.ml.gnn import LTSGNN, GNNDataUtil, LTSRegressionModel
 from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
 
 logger = logging.getLogger(__name__)
