@@ -1,3 +1,4 @@
+import os
 from logging import config
 
 import torch
@@ -60,3 +61,8 @@ plt.rcParams["legend.edgecolor"] = "black"
 # ===
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("PyTorch Device: {}".format(str(DEVICE)))
+
+# ===
+# SIGNAL
+# ===
+DEFAULT_SIGNAL_DIR = os.path.join("tmp", "signals")

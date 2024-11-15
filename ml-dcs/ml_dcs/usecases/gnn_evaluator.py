@@ -18,6 +18,7 @@ from ml_dcs.domain.ml_gnn import (
 )
 from ml_dcs.internal.ml.gnn import LTSGNN, GNNDataUtil, LTSRegressionModel
 from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
+from ml_dcs.internal.signal.signal import Signal, SignalUtil
 
 logger = logging.getLogger(__name__)
 
@@ -141,11 +142,11 @@ class GNNEvaluator:
                 )
                 task_results.append(task_result)
                 if verbose:
-                    logger.info("Test result: %s", task_result.model_dump_json())
+                    logger.info("testing result: %s", task_result.model_dump_json())
 
         result = GNNTestingResult(task_results=task_results)
         if verbose:
-            logger.info("[+] Test Loss Average: {}".format(result.loss_avg))
+            logger.info("[+] testing_loss_avg: {}".format(result.loss_avg))
 
         return result
 
@@ -212,11 +213,26 @@ class GNNEvaluator:
             epoch_results.append(epoch_result)
 
             logger.info(
-                f"Epoch {epoch + 1}/{self.max_epochs}, Train Loss Average: {loss_average}, Test Loss Average: {testing_result.loss_avg}"
+                "training result: %s",
+                json.dumps(
+                    {
+                        "epoch": f"{epoch + 1}/{self.max_epochs}",
+                        "train_loss_avg": str(loss_average),
+                        "test_loss_avg": str(testing_result.loss_avg),
+                    }
+                ),
             )
 
             if not early_stopping.is_valid():
-                logger.info("Early stopping")
+                logger.info("early stopped")
+                break
+
+            # ===
+            # Manual stopping
+            # ===
+            stop_manually = SignalUtil.read(Signal.STOP_TRAINING)
+            if stop_manually:
+                logger.info("manually stopped")
                 break
 
         finished_at = datetime.datetime.now()
