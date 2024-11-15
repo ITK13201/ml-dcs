@@ -165,7 +165,7 @@ class GNNEvaluator:
 
         epoch_results = []
         for epoch in range(self.max_epochs):
-            started_at = datetime.datetime.now()
+            task_started_at = datetime.datetime.now()
 
             # ===
             # TRAINING
@@ -203,25 +203,38 @@ class GNNEvaluator:
             # ===
             # Post processing
             # ===
-            finished_at = datetime.datetime.now()
+            task_finished_at = datetime.datetime.now()
             epoch_result = GNNTrainingResultEpoch(
                 training_loss_avg=loss_average,
                 testing_loss_avg=testing_result.loss_avg,
-                started_at=started_at,
-                finished_at=finished_at,
+                started_at=task_started_at,
+                finished_at=task_finished_at,
             )
             epoch_results.append(epoch_result)
 
-            logger.info(
-                "training result: %s",
-                json.dumps(
-                    {
-                        "epoch": f"{epoch + 1}/{self.max_epochs}",
-                        "train_loss_avg": str(loss_average),
-                        "test_loss_avg": str(testing_result.loss_avg),
-                    }
-                ),
-            )
+            if epoch % 10 == 0:
+                logger.info(
+                    "training result: %s",
+                    json.dumps(
+                        {
+                            "epoch": f"{epoch + 1}/{self.max_epochs}",
+                            "train_loss_avg": str(loss_average),
+                            "test_loss_avg": str(testing_result.loss_avg),
+                            "test_r_squared": str(testing_result.r_squared),
+                        }
+                    ),
+                )
+            else:
+                logger.info(
+                    "training result: %s",
+                    json.dumps(
+                        {
+                            "epoch": f"{epoch + 1}/{self.max_epochs}",
+                            "train_loss_avg": str(loss_average),
+                            "test_loss_avg": str(testing_result.loss_avg),
+                        }
+                    ),
+                )
 
             if not early_stopping.is_valid():
                 logger.info("early stopped")

@@ -1,6 +1,8 @@
 import os
+import random
 from logging import config
 
+import numpy as np
 import torch
 from matplotlib import pyplot as plt
 
@@ -66,3 +68,12 @@ print("PyTorch Device: {}".format(str(DEVICE)))
 # SIGNAL
 # ===
 DEFAULT_SIGNAL_DIR = os.path.join("tmp", "signals")
+
+# ===
+# ML Random Seed
+# ===
+DEFAULT_RANDOM_SEED = 42
+random.seed(DEFAULT_RANDOM_SEED)
+np.random.seed(DEFAULT_RANDOM_SEED)
+torch.manual_seed(DEFAULT_RANDOM_SEED)
+torch.cuda.manual_seed(DEFAULT_RANDOM_SEED)
