@@ -8,6 +8,7 @@ from torch_geometric.data import Batch, Data
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 from ml_dcs.config.config import DEVICE
+from ml_dcs.domain.ml_gnn import TestingData, TrainingData
 from ml_dcs.domain.mtsa import MTSAResult
 
 logger = logging.getLogger(__name__)
@@ -176,7 +177,7 @@ class GNNDataUtil:
         batch = Batch.from_data_list(lts_embeddings)
         return batch
 
-    def get_training_dataset(self):
+    def get_training_dataset(self) -> List[TrainingData]:
         dataset = []
         for mtsa_result in self.training_mtsa_results:
             mtsa_result: MTSAResult
@@ -189,10 +190,16 @@ class GNNDataUtil:
                 case _:
                     raise ValueError(f"Unknown target name: {self.target_name}")
             target_tensor = torch.tensor(target).to(DEVICE)
-            dataset.append([lts_set_graph, target_tensor])
+
+            training_data = TrainingData(
+                lts_name=mtsa_result.lts,
+                lts_set_graph=lts_set_graph,
+                target=target_tensor,
+            )
+            dataset.append(training_data)
         return dataset
 
-    def get_testing_dataset(self):
+    def get_testing_dataset(self) -> List[TestingData]:
         dataset = []
         for mtsa_result in self.testing_mtsa_results:
             mtsa_result: MTSAResult
@@ -205,5 +212,11 @@ class GNNDataUtil:
                 case _:
                     raise ValueError(f"Unknown target name: {self.target_name}")
             target_tensor = torch.tensor(target).to(DEVICE)
-            dataset.append([lts_set_graph, target_tensor])
+
+            testing_data = TestingData(
+                lts_name=mtsa_result.lts,
+                lts_set_graph=lts_set_graph,
+                target=target_tensor,
+            )
+            dataset.append(testing_data)
         return dataset
