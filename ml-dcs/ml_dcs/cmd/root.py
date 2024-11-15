@@ -3,10 +3,12 @@ from typing import Type
 
 from ml_dcs.cmd.base import BaseCommand
 from ml_dcs.cmd.check_gpu import CheckGPUCommand
+from ml_dcs.cmd.predict_calculation_time.gnn import PredictCalculationTimeGNNCommand
 from ml_dcs.cmd.predict_calculation_time.root import PredictCalculationTimeCommand
 from ml_dcs.cmd.predict_calculation_time.simple import (
     PredictCalculationTimeSimpleCommand,
 )
+from ml_dcs.cmd.predict_memory_usage.gnn import PredictMemoryUsageGNNCommand
 from ml_dcs.cmd.predict_memory_usage.root import PredictMemoryUsageCommand
 from ml_dcs.cmd.predict_memory_usage.simple import PredictMemoryUsageSimpleCommand
 from ml_dcs.cmd.try_sample import TrySampleCommand
@@ -39,11 +41,17 @@ class RootCommand:
         self.add_command(
             PredictCalculationTimeSimpleCommand, parent=predict_calculation_time_command
         )
+        self.add_command(
+            PredictCalculationTimeGNNCommand, parent=predict_calculation_time_command
+        )
         predict_memory_usage_command = self.add_command(
             PredictMemoryUsageCommand, is_parent=True
         )
         self.add_command(
             PredictMemoryUsageSimpleCommand, parent=predict_memory_usage_command
+        )
+        self.add_command(
+            PredictMemoryUsageGNNCommand, parent=predict_memory_usage_command
         )
         self.add_command(CheckGPUCommand)
 

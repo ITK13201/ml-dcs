@@ -244,6 +244,8 @@ class GNNEvaluator:
         return result
 
     def evaluate(self):
+        # load data
+        logger.info("loading dataset...")
         mtsa_data_util = MTSADataUtil(self.input_dir_path)
         mtsa_results = mtsa_data_util.get_parsed_data()
 
