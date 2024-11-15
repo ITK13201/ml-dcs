@@ -1,8 +1,10 @@
+import argparse
 import json
 import logging
 import os
 from datetime import datetime
 
+from ml_dcs.cmd.base import BaseCommand
 from ml_dcs.domain.ml import MLMemoryUsagePredictionInput2
 from ml_dcs.internal.ml.prediction_methods import (
     DecisionTreePrediction,
@@ -15,15 +17,30 @@ from ml_dcs.usecases.evaluator import RandomStateEvaluator
 logger = logging.getLogger(__name__)
 
 
-class PredictMemoryUsageSimpleExecutor:
-    def __init__(self, input_dir: str, output_dir: str, bench_result_file_path: str):
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-        self.bench_result_file_path = bench_result_file_path
-        self.mode = "simple"
+class PredictMemoryUsageSimpleCommand(BaseCommand):
+    name = "simple"
+    help = "Predict memory usage using simple ML methods"
 
-    def execute(self):
-        logger.info("mode: %s", self.mode)
+    def add_arguments(self, parser: argparse.ArgumentParser):
+        parser.add_argument(
+            "-i", "--input-dir", type=str, required=True, help="Input data directory"
+        )
+        parser.add_argument(
+            "-o", "--output-dir", type=str, required=True, help="Output data directory"
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.input_dir = ""
+        self.output_dir = ""
+        self.bench_result_file_path = ""
+
+    def execute(self, args: argparse.Namespace):
+        logger.info("PredictMemoryUsageSimpleCommand started")
+
+        self.input_dir = args.input_dir
+        self.output_dir = args.output_dir
+        self.bench_result_file_path = args.bench_result_file_path
 
         # GBDT
         logger.info("GBDT started")
@@ -45,12 +62,13 @@ class PredictMemoryUsageSimpleExecutor:
         self._predict_using_lr(self.input_dir, self.output_dir)
         logger.info("LR finished")
 
+        logger.info("PredictMemoryUsageSimpleCommand finished")
+
     def _get_output_file_name(self, ml_algorithm: str) -> str:
         return (
             "_".join(
                 [
                     "memory-usage",
-                    self.mode,
                     ml_algorithm,
                     datetime.now().strftime("%y%m%d%H%M%S"),
                 ]
