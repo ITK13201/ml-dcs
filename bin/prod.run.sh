@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# variables
+PYTHON_EXEC=/opt/conda/bin/python
+INPUT_DIR_PATH=./tmp/evaluation/20241031-142305/input
+BENCH_RESULT_FILE_PATH=./tmp/evaluation/result_20241031-142305.json
+OUTPUT_DIR_SIMPLE_CT=/tmp/evaluation/20241031-142305/output/simple/calculation-time
+OUTPUT_DIR_SIMPLE_MU=/tmp/evaluation/20241031-142305/output/simple/memory-usage
+OUTPUT_DIR_GNN_CT=./tmp/evaluation/20241031-142305/output/gnn/calculation-time
+OUTPUT_DIR_GNN_MU=./tmp/evaluation/20241031-142305/output/gnn/memory-usage
+MAX_EPOCHS=10000
+
+# simple-ct
+${PYTHON_EXEC} main.py predict_calculation_time simple \
+  --input-dir=${INPUT_DIR_PATH} \
+  --output-dir=${OUTPUT_DIR_SIMPLE_CT} \
+  --bench-result-file ${BENCH_RESULT_FILE_PATH}
+
+# simple-mu
+${PYTHON_EXEC} main.py predict_memory_usage simple \
+  --input-dir=${INPUT_DIR_PATH} \
+  --output-dir=${OUTPUT_DIR_SIMPLE_MU} \
+  --bench-result-file ${BENCH_RESULT_FILE_PATH}
+
+# exec-gnn-ct
+${PYTHON_EXEC} main.py predict_calculation_time gnn \
+  --input-dir-path ${INPUT_DIR_PATH} \
+  --bench-result-file ${BENCH_RESULT_FILE_PATH} \
+  --output-base-dir-path ${OUTPUT_DIR_GNN_CT} \
+  --max-epochs ${MAX_EPOCHS}
+
+
+# exec-gnn-mu
+${PYTHON_EXEC} main.py predict_memory_usage gnn \
+  --input-dir-path ${INPUT_DIR_PATH} \
+  --bench-result-file ${BENCH_RESULT_FILE_PATH} \
+  --output-base-dir-path ${OUTPUT_DIR_GNN_MU} \
+  --max-epochs ${MAX_EPOCHS}

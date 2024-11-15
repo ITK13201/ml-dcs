@@ -17,12 +17,12 @@ MAX_EPOCHS				= 10
 exec-simple-ct:
 	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py predict_calculation_time simple \
 		--input-dir=$(INPUT_DIR_PATH) \
-		--output-dir=$(OUTPUT_DIR_SIMPLE) \
+		--output-dir=$(OUTPUT_DIR_SIMPLE_CT) \
 		--bench-result-file $(BENCH_RESULT_FILE_PATH)
 exec-simple-mu:
 	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py predict_memory_usage simple \
 		--input-dir=$(INPUT_DIR_PATH) \
-		--output-dir=$(OUTPUT_DIR_SIMPLE) \
+		--output-dir=$(OUTPUT_DIR_SIMPLE_MU) \
 		--bench-result-file $(BENCH_RESULT_FILE_PATH)
 exec-gnn-ct:
 	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py predict_calculation_time gnn \

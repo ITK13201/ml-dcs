@@ -1,0 +1,19 @@
+services:
+  ml-dcs:
+    image: ghcr.io/itk13201/ml-dcs:latest
+    volumes:
+      - ./ml-dcs.log:/usr/local/src/ml-dcs/ml-dcs.log
+      - ./signals:/usr/local/src/ml-dcs/tmp/signals
+      - ./evaluation:/usr/local/src/ml-dcs/tmp/evaluation
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      TZ: "Asia/Tokyo"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
