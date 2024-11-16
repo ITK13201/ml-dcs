@@ -1,18 +1,13 @@
 import argparse
-import json
+import datetime
 import logging
 import os
-from datetime import datetime
 
 from ml_dcs.cmd.base import BaseCommand
-from ml_dcs.domain.ml import MLCalculationTimePredictionInput2
-from ml_dcs.internal.ml.prediction_methods import (
-    DecisionTreePrediction,
-    GradientBoostingPrediction,
-    LogisticRegressionPrediction,
-    RandomForestPrediction,
-)
-from ml_dcs.usecases.evaluator import RandomStateEvaluator
+from ml_dcs.domain.ml_simple import MLCalculationTimePredictionInput2
+from ml_dcs.internal.ml.simple import RegressionAlgorithm
+from ml_dcs.internal.signal.signal import SignalUtil
+from ml_dcs.usecases.simple_evaluator import MLSimpleEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +18,11 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         parser.add_argument(
-            "-i", "--input-dir", type=str, required=True, help="Input data directory"
-        )
-        parser.add_argument(
-            "-o", "--output-dir", type=str, required=True, help="Output data directory"
+            "-i",
+            "--input-dir-path",
+            type=str,
+            required=True,
+            help="Input data directory",
         )
         parser.add_argument(
             "-f",
@@ -35,98 +31,132 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             required=True,
             help="Bench result file path",
         )
+        # output
+        parser.add_argument(
+            "-o",
+            "--output-base-dir-path",
+            type=str,
+            required=True,
+            help="Output base directory path",
+        )
+        # additional
+        parser.add_argument(
+            "-s",
+            "--signal-dir",
+            type=str,
+            required=False,
+            help="Signal directory path",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.input_dir = ""
-        self.output_dir = ""
-        self.bench_result_file_path = ""
+        # === args ===
+        self.input_dir_path = None
+        self.bench_result_file_path = None
+        self.output_base_dir_path = None
+        self.signal_dir = None
+        # === parameters ===
+        self.output_dir_path = None
+        self.ml_input_class = MLCalculationTimePredictionInput2
 
     def execute(self, args: argparse.Namespace):
         logger.info("PredictCalculationTimeSimpleCommand started")
 
-        self.input_dir = args.input_dir
-        self.output_dir = args.output_dir
-        self.bench_result_file_path = args.bench_result_file_path
+        # args
+        self.input_dir_path: str = args.input_dir_path
+        self.bench_result_file_path: str = args.bench_result_file
+        self.output_base_dir_path: str = args.output_base_dir_path
+        self.signal_dir: str | None = args.signal_dir
+
+        # build output dir
+        now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.output_dir_path: str = os.path.join(self.output_base_dir_path, now_str)
+        os.makedirs(self.output_dir_path, exist_ok=True)
+
+        # signal dir
+        if self.signal_dir is not None:
+            SignalUtil.set_signal_dir(self.signal_dir)
 
         # GBDT
         logger.info("GBDT started")
-        self._predict_using_gbdt(self.input_dir, self.output_dir)
+        self._evaluate_gbdt()
         logger.info("GBDT finished")
 
         # RF
         logger.info("RF started")
-        self._predict_using_rf(self.input_dir, self.output_dir)
+        self._evaluate_rf()
         logger.info("RF finished")
 
         # DT
         logger.info("DT started")
-        self._predict_using_dt(self.input_dir, self.output_dir)
+        self._evaluate_dt()
         logger.info("DT finished")
 
         # LR
         logger.info("LR started")
-        self._predict_using_lr(self.input_dir, self.output_dir)
+        self._evaluate_lr()
         logger.info("LR finished")
 
         logger.info("PredictCalculationTimeSimpleCommand finished")
 
-    def _get_output_file_name(self, ml_algorithm: str) -> str:
-        return (
-            "_".join(
-                [
-                    "calculation-time",
-                    ml_algorithm,
-                    datetime.now().strftime("%y%m%d%H%M%S"),
-                ]
-            )
-            + ".json"
-        )
+    def _get_training_result_output_file_path(self, algorithm: str) -> str:
+        return os.path.join(self.output_dir_path, f"training-result_{algorithm}.json")
 
-    def _predict_using_gbdt(self, input_dir: str, output_dir: str):
-        evaluator = RandomStateEvaluator(
-            input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
-            prediction_class=GradientBoostingPrediction,
-        )
-        result = evaluator.evaluate()
-        output_name = self._get_output_file_name(ml_algorithm="GBDT")
-        output_path = os.path.join(output_dir, output_name)
-        with open(output_path, "w") as f:
-            json.dump(result.model_dump(), f, indent=2, ensure_ascii=False)
+    def _get_testing_result_output_file_path(self, algorithm: str) -> str:
+        return os.path.join(self.output_dir_path, f"testing-result_{algorithm}.json")
 
-    def _predict_using_rf(self, input_dir: str, output_dir: str):
-        evaluator = RandomStateEvaluator(
-            input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
-            prediction_class=RandomForestPrediction,
+    def _evaluate_gbdt(self):
+        evaluator = MLSimpleEvaluator(
+            input_dir_path=self.input_dir_path,
+            training_result_output_file_path=self._get_training_result_output_file_path(
+                "GBDT"
+            ),
+            testing_result_output_file_path=self._get_testing_result_output_file_path(
+                "GBDT"
+            ),
+            algorithm=RegressionAlgorithm.GRADIENT_BOOSTING_DECISION_TREE,
+            ml_input_class=self.ml_input_class,
         )
-        result = evaluator.evaluate()
-        output_name = self._get_output_file_name(ml_algorithm="RF")
-        output_path = os.path.join(output_dir, output_name)
-        with open(output_path, "w") as f:
-            json.dump(result.model_dump(), f, indent=2, ensure_ascii=False)
+        evaluator.evaluate()
 
-    def _predict_using_dt(self, input_dir: str, output_dir: str):
-        evaluator = RandomStateEvaluator(
-            input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
-            prediction_class=DecisionTreePrediction,
+    def _evaluate_rf(self):
+        evaluator = MLSimpleEvaluator(
+            input_dir_path=self.input_dir_path,
+            training_result_output_file_path=self._get_training_result_output_file_path(
+                "RF"
+            ),
+            testing_result_output_file_path=self._get_testing_result_output_file_path(
+                "RF"
+            ),
+            algorithm=RegressionAlgorithm.RANDOM_FOREST,
+            ml_input_class=self.ml_input_class,
         )
-        result = evaluator.evaluate()
-        output_name = self._get_output_file_name(ml_algorithm="DT")
-        output_path = os.path.join(output_dir, output_name)
-        with open(output_path, "w") as f:
-            json.dump(result.model_dump(), f, indent=2, ensure_ascii=False)
+        evaluator.evaluate()
 
-    def _predict_using_lr(self, input_dir: str, output_dir: str):
-        evaluator = RandomStateEvaluator(
-            input_dir_path=input_dir,
-            ml_input_class=MLCalculationTimePredictionInput2,
-            prediction_class=LogisticRegressionPrediction,
+    def _evaluate_dt(self):
+        evaluator = MLSimpleEvaluator(
+            input_dir_path=self.input_dir_path,
+            training_result_output_file_path=self._get_training_result_output_file_path(
+                "DT"
+            ),
+            testing_result_output_file_path=self._get_testing_result_output_file_path(
+                "DT"
+            ),
+            algorithm=RegressionAlgorithm.DECISION_TREE,
+            ml_input_class=self.ml_input_class,
         )
-        result = evaluator.evaluate()
-        output_name = self._get_output_file_name(ml_algorithm="LR")
-        output_path = os.path.join(output_dir, output_name)
-        with open(output_path, "w") as f:
-            json.dump(result.model_dump(), f, indent=2, ensure_ascii=False)
+        evaluator.evaluate()
+
+    def _evaluate_lr(self):
+        evaluator = MLSimpleEvaluator(
+            input_dir_path=self.input_dir_path,
+            training_result_output_file_path=self._get_training_result_output_file_path(
+                "LR"
+            ),
+            testing_result_output_file_path=self._get_testing_result_output_file_path(
+                "LR"
+            ),
+            algorithm=RegressionAlgorithm.LOGISTIC_REGRESSION,
+            ml_input_class=self.ml_input_class,
+        )
+        evaluator.evaluate()

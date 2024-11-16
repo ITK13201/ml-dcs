@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+from typing import List
 
-from pydantic import BaseModel
+import numpy as np
+from pydantic import BaseModel, computed_field
+from sklearn.metrics import mean_absolute_error, r2_score
 
 from ml_dcs.domain.mtsa import MTSAResult
 
@@ -142,6 +146,140 @@ class MLMemoryUsagePredictionInput2(BaseMLInput):
         return cls(**variables)
 
 
-class MLResult(BaseModel):
-    r2_score: float
+# ===
+# Results
+# ===
+class MLSimpleTrainingResult(BaseModel):
+    algorithm: str
+    random_state: int
+    started_at: datetime
+    finished_at: datetime
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._duration = None
+
+    @computed_field
+    @property
+    def duration(self) -> timedelta:
+        if self._duration is None:
+            self._duration = self.finished_at - self.started_at
+            return self._duration
+        else:
+            return self._duration
+
+
+class MLSimpleTrainingResultSet(BaseModel):
+    algorithm: str
+    results: List[MLSimpleTrainingResult]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # === computed fields ===
+        self._duration_sum = None
+        self._duration_avg = None
+
+    @computed_field
+    @property
+    def duration_sum(self) -> timedelta:
+        if self._duration_sum is None:
+            sum = 0
+            for result in self.results:
+                sum += result.duration.total_seconds()
+                self._duration_sum = timedelta(seconds=sum)
+            return self._duration_sum
+        else:
+            return self._duration_sum
+
+    @computed_field
+    @property
+    def duration_avg(self) -> timedelta:
+        if self._duration_avg is None:
+            sum = self.duration_sum.total_seconds()
+            avg = sum / len(self.results)
+            self._duration_avg = timedelta(seconds=avg)
+            return self._duration_avg
+        else:
+            return self._duration_avg
+
+
+class MLSimpleTestingResult(BaseModel):
+    algorithm: str
+    random_state: int
+    actual_values: List[float]
+    predicted_values: List[float]
+    started_at: datetime
+    finished_at: datetime
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._duration = None
+        self._mae = None
+        self._r_squared = None
+
+    @computed_field
+    @property
+    def duration(self) -> timedelta:
+        if self._duration is None:
+            self._duration = self.finished_at - self.started_at
+            return self._duration
+        else:
+            return self._duration
+
+    @computed_field
+    @property
+    def mae(self) -> float:
+        if self._mae is None:
+            self._mae = mean_absolute_error(self.actual_values, self.predicted_values)
+            return self._mae
+        else:
+            return self._mae
+
+    @computed_field
+    @property
+    def r_squared(self) -> float:
+        if self._r_squared is None:
+            self._r_squared = r2_score(self.actual_values, self.predicted_values)
+            return self._r_squared
+        else:
+            return self._r_squared
+
+
+class MLSimpleTestingResultFinal(BaseModel):
+    algorithm: str
+    random_state: int
+    duration: timedelta
     mae: float
+    r_squared: float
+
+
+class MLSimpleTestingResultSet(BaseModel):
+    algorithm: str
+    results: List[MLSimpleTestingResultFinal]
+    result_at_best_accuracy: MLSimpleTestingResult
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._duration = None
+        self._mae_variance = None
+        self._r_squared_variance = None
+
+    @computed_field
+    @property
+    def mae_variance(self) -> float:
+        if self._mae_variance is None:
+            mae_values = [result.mae for result in self.results]
+            self._mae_variance = np.var(mae_values).item()
+            return self._mae_variance
+        else:
+            return self._mae_variance
+
+    @computed_field
+    @property
+    def r_squared_variance(self) -> float:
+        if self._r_squared_variance is None:
+            r_squared_values = [result.r_squared for result in self.results]
+            self._r_squared_variance = np.var(r_squared_values).item()
+            return self._r_squared_variance
+        else:
+            return self._r_squared_variance

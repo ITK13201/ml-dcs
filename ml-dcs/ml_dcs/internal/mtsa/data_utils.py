@@ -5,7 +5,7 @@ from typing import Iterator, List, Tuple, Type
 
 import pandas as pd
 
-from ml_dcs.domain.ml import BaseMLInput
+from ml_dcs.domain.ml_simple import BaseMLInput
 from ml_dcs.domain.mtsa import MTSAResult
 from ml_dcs.domain.mtsa_bench import MTSABenchResult
 
