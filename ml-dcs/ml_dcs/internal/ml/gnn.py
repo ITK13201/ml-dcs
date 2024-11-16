@@ -13,13 +13,13 @@ from ml_dcs.domain.mtsa import MTSAResult
 
 logger = logging.getLogger(__name__)
 
-LTS_EMBEDDING_SIZE = 8
+LTS_EMBEDDING_SIZE = 256
 DEFAULT_RANDOM_STATE = 42
 
 
 class LTSGNN(torch.nn.Module):
     INPUT_CHANNELS = 5
-    HIDDEN_CHANNELS = 16
+    HIDDEN_CHANNELS = 512
     OUTPUT_CHANNELS = LTS_EMBEDDING_SIZE
 
     def __init__(self):
@@ -49,7 +49,7 @@ class LTSGNN(torch.nn.Module):
 
 class LTSRegressionModel(torch.nn.Module):
     INPUT_CHANNELS = LTS_EMBEDDING_SIZE
-    HIDDEN_CHANNELS = 32
+    HIDDEN_CHANNELS = 128
     OUTPUT_CHANNELS = 1
 
     def __init__(self):
