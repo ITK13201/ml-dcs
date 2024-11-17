@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, List
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ByteSize, ConfigDict, Field, field_validator
 
 
 class MTSABenchResultTask(BaseModel):
@@ -9,8 +9,18 @@ class MTSABenchResultTask(BaseModel):
     success: bool
     started_at: datetime
     finished_at: datetime
-    max_memory_usage: float = Field(alias="max_memory_usage [KiB]")
+    max_memory_usage: ByteSize = Field(alias="max_memory_usage [KiB]")
     duration: timedelta
+
+    @field_validator("max_memory_usage", mode="before", check_fields=True)
+    @classmethod
+    def validate_max_memory_usage(cls, v: int) -> ByteSize:
+        kib = 2**10
+        return ByteSize(v * kib)
+
+    @property
+    def max_memory_usage_kb(self) -> float:
+        return self.max_memory_usage.to("KB")
 
 
 class MTSABenchResult(BaseModel):

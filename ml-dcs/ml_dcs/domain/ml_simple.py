@@ -106,7 +106,7 @@ class MLMemoryUsagePredictionInput1(BaseMLInput):
             "total_number_of_uncontrollable_actions": mtsa_result.compile_step.total_number_of_uncontrollable_actions,
             "ratio_of_controllable_actions": mtsa_result.compile_step.ratio_of_controllable_actions,
             "number_of_models": mtsa_result.compile_step.number_of_models,
-            "memory_usage": mtsa_result.max_memory_usage_kib,
+            "memory_usage": mtsa_result.max_memory_usage_kb,
         }
         return cls(**variables)
 
@@ -141,7 +141,7 @@ class MLMemoryUsagePredictionInput2(BaseMLInput):
             "sum_of_number_of_transitions_of_requirements": mtsa_result.initial_models.sum_of_number_of_transitions_of_requirements,
             "sum_of_number_of_controllable_actions_of_requirements": mtsa_result.initial_models.sum_of_number_of_controllable_actions_of_requirements,
             "sum_of_number_of_uncontrollable_actions_of_requirements": mtsa_result.initial_models.sum_of_number_of_uncontrollable_actions_of_requirements,
-            "memory_usage": mtsa_result.max_memory_usage_kib,
+            "memory_usage": mtsa_result.max_memory_usage_kb,
         }
         return cls(**variables)
 

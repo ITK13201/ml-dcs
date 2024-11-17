@@ -186,7 +186,7 @@ class GNNDataUtil:
                 case "calculation_time":
                     target = mtsa_result.duration_ms
                 case "memory_usage":
-                    target = mtsa_result.max_memory_usage_kib
+                    target = mtsa_result.max_memory_usage_kb
                 case _:
                     raise ValueError(f"Unknown target name: {self.target_name}")
             target_tensor = torch.tensor(target).to(DEVICE)
@@ -208,7 +208,7 @@ class GNNDataUtil:
                 case "calculation_time":
                     target = mtsa_result.duration_ms
                 case "memory_usage":
-                    target = mtsa_result.max_memory_usage_kib
+                    target = mtsa_result.max_memory_usage_kb
                 case _:
                     raise ValueError(f"Unknown target name: {self.target_name}")
             target_tensor = torch.tensor(target).to(DEVICE)

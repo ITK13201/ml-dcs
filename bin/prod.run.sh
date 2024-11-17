@@ -4,8 +4,8 @@
 PYTHON_EXEC=/opt/conda/bin/python
 INPUT_DIR_PATH=./tmp/evaluation/20241116-000000/input
 BENCH_RESULT_FILE_PATH=./tmp/evaluation/result_20241116-000000.json
-OUTPUT_DIR_SIMPLE_CT=/tmp/evaluation/20241116-000000/output/simple/calculation-time
-OUTPUT_DIR_SIMPLE_MU=/tmp/evaluation/20241116-000000/output/simple/memory-usage
+OUTPUT_DIR_SIMPLE_CT=./tmp/evaluation/20241116-000000/output/simple/calculation-time
+OUTPUT_DIR_SIMPLE_MU=./tmp/evaluation/20241116-000000/output/simple/memory-usage
 OUTPUT_DIR_GNN_CT=./tmp/evaluation/20241116-000000/output/gnn/calculation-time
 OUTPUT_DIR_GNN_MU=./tmp/evaluation/20241116-000000/output/gnn/memory-usage
 MAX_EPOCHS=10000

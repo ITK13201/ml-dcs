@@ -499,6 +499,7 @@ class MTSAResult(BaseModel):
     started_at: datetime
     finished_at: datetime
     duration: timedelta = Field(alias="duration [ms]")
+    # This is mistake. actual is KB.
     max_memory_usage: ByteSize = Field(alias="maxMemoryUsage [KiB]")
 
     # configuration of this model
@@ -516,8 +517,8 @@ class MTSAResult(BaseModel):
     @field_validator("max_memory_usage", mode="before", check_fields=True)
     @classmethod
     def validate_max_memory_usage(cls, v: int) -> ByteSize:
-        kib = 2**10
-        return ByteSize(v * kib)
+        kb = 10**3
+        return ByteSize(v * kb)
 
     @property
     def duration_ms(self) -> float:
@@ -529,8 +530,8 @@ class MTSAResult(BaseModel):
         return adapter.dump_python(self.duration, mode="json")
 
     @property
-    def max_memory_usage_kib(self) -> float:
-        return self.max_memory_usage.to("KiB")
+    def max_memory_usage_kb(self) -> float:
+        return self.max_memory_usage.to("KB")
 
     @property
     def significant_duration(self):
