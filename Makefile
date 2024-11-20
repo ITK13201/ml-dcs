@@ -3,15 +3,15 @@ DOCKER_RUN				= docker compose run --rm
 PYTHON_EXEC				= /opt/conda/bin/python
 # === args ===
 # input
-INPUT_DIR_PATH			= ./tmp/evaluation/20241031-142305/input
-BENCH_RESULT_FILE_PATH	= ./tmp/evaluation/result_20241031-142305.json
+INPUT_DIR_PATH			= ./tmp/evaluation/20241116-000000/input
+BENCH_RESULT_FILE_PATH	= ./tmp/evaluation/result_20241116-000000.json
 # output
-OUTPUT_DIR_SIMPLE_CT	= ./tmp/evaluation/20241031-142305/output/simple/calculation-time
-OUTPUT_DIR_SIMPLE_MU	= ./tmp/evaluation/20241031-142305/output/simple/memory-usage
-OUTPUT_DIR_GNN_CT		= ./tmp/evaluation/20241031-142305/output/gnn/calculation-time
-OUTPUT_DIR_GNN_MU		= ./tmp/evaluation/20241031-142305/output/gnn/memory-usage
+OUTPUT_DIR_SIMPLE_CT	= ./tmp/evaluation/20241116-000000/output/simple/calculation-time
+OUTPUT_DIR_SIMPLE_MU	= ./tmp/evaluation/20241116-000000/output/simple/memory-usage
+OUTPUT_DIR_GNN_CT		= ./tmp/evaluation/20241116-000000/output/gnn/calculation-time
+OUTPUT_DIR_GNN_MU		= ./tmp/evaluation/20241116-000000/output/gnn/memory-usage
 # additional
-MAX_EPOCHS				= 10
+MAX_EPOCHS				= 10000
 
 
 exec-simple-ct:

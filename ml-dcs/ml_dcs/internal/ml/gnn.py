@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch_geometric.data import Batch, Data
-from torch_geometric.nn import GCNConv, global_mean_pool
+from torch_geometric.nn import GATConv, GCNConv, global_mean_pool
 
 from ml_dcs.config.config import DEVICE
 from ml_dcs.domain.ml_gnn import ModelFeature, TestingData, TrainingData, ValidationData
@@ -14,34 +14,39 @@ from ml_dcs.internal.preprocessor.preprocessor import LTSStructurePreprocessor
 
 logger = logging.getLogger(__name__)
 
-LTS_EMBEDDING_SIZE = 256
+LTS_EMBEDDING_SIZE = 64
 DEFAULT_RANDOM_STATE = 42
 
 
 class LTSGNN(torch.nn.Module):
     INPUT_CHANNELS = 5
-    HIDDEN_CHANNELS = 512
+    HIDDEN_CHANNELS = 128
     OUTPUT_CHANNELS = LTS_EMBEDDING_SIZE
+    EDGE_DIMENSION = 3
 
     def __init__(self):
         super(LTSGNN, self).__init__()
-        self.conv1 = GCNConv(self.INPUT_CHANNELS, self.HIDDEN_CHANNELS).to(DEVICE)
-        self.conv2 = GCNConv(self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS).to(DEVICE)
+        self.conv1 = GATConv(
+            self.INPUT_CHANNELS, self.HIDDEN_CHANNELS, edge_dim=self.EDGE_DIMENSION
+        ).to(DEVICE)
+        self.conv2 = GATConv(
+            self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS, edge_dim=self.EDGE_DIMENSION
+        ).to(DEVICE)
 
     def forward(self, data: Data):
-        x, edge_index, edge_weight, batch = (
+        x, edge_index, edge_attr, batch = (
             data.x,
             data.edge_index,
-            data.edge_weight,
+            data.edge_attr,
             data.batch,
         )
 
         # 1st graph convolution
-        x = self.conv1(x=x, edge_index=edge_index, edge_weight=edge_weight)
+        x = self.conv1(x=x, edge_index=edge_index, edge_attr=edge_attr)
         x = F.relu(x)
 
         # 2nd graphh convolution
-        x = self.conv2(x=x, edge_index=edge_index, edge_weight=edge_weight)
+        x = self.conv2(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
         # pooling
         x = global_mean_pool(x, batch)
@@ -50,7 +55,7 @@ class LTSGNN(torch.nn.Module):
 
 class LTSRegressionModel(torch.nn.Module):
     INPUT_CHANNELS = LTS_EMBEDDING_SIZE
-    HIDDEN_CHANNELS = 128
+    HIDDEN_CHANNELS = 32
     OUTPUT_CHANNELS = 1
 
     def __init__(self):
@@ -104,25 +109,20 @@ class GNNDataUtil:
         node_features_tensor = torch.tensor(
             model_feature.node_features, dtype=torch.float
         ).to(DEVICE)
-
-        # TEMP
-        edge_indexes = []
-        for index, edge_index in enumerate(model_feature.edge_indexes):
-            if index % 2 == 0:
-                edge_indexes.append(edge_index)
         edge_indexes_tensor = (
-            torch.tensor(edge_indexes, dtype=torch.long).t().contiguous().to(DEVICE)
+            torch.tensor(model_feature.edge_indexes, dtype=torch.long)
+            .t()
+            .contiguous()
+            .to(DEVICE)
         )
-        edge_weights = []
-        for index, edge_attr in enumerate(model_feature.edge_attributes):
-            if index % 2 == 0:
-                edge_weights.append(edge_attr[0])
-        edge_weights_tensor = torch.tensor(edge_weights, dtype=torch.float).to(DEVICE)
+        edge_attributes_tensor = torch.tensor(
+            model_feature.edge_attributes, dtype=torch.float
+        ).to(DEVICE)
 
         lts_embedding = Data(
             x=node_features_tensor,
             edge_index=edge_indexes_tensor,
-            edge_weight=edge_weights_tensor,
+            edge_weight=edge_attributes_tensor,
         ).to(DEVICE)
 
         return lts_embedding
