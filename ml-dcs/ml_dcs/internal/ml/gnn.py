@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -8,8 +8,9 @@ from torch_geometric.data import Batch, Data
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 from ml_dcs.config.config import DEVICE
-from ml_dcs.domain.ml_gnn import TestingData, TrainingData
+from ml_dcs.domain.ml_gnn import ModelFeature, TestingData, TrainingData, ValidationData
 from ml_dcs.domain.mtsa import MTSAResult
+from ml_dcs.internal.preprocessor.preprocessor import LTSStructurePreprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +73,16 @@ class LTSRegressionModel(torch.nn.Module):
 class GNNDataUtil:
     ALLOWED_TARGET_NAMES: List[str] = ["calculation_time", "memory_usage"]
 
-    def _split_mtsa_results(self, mtsa_results: List[MTSAResult]):
-        training_results, testing_results = train_test_split(
-            mtsa_results, test_size=0.2, random_state=DEFAULT_RANDOM_STATE
+    def _split_mtsa_results(
+        self, mtsa_results: List[MTSAResult]
+    ) -> Tuple[List[MTSAResult], List[MTSAResult], List[MTSAResult]]:
+        training_results, tmp = train_test_split(
+            mtsa_results, test_size=0.3, random_state=DEFAULT_RANDOM_STATE
         )
-        return training_results, testing_results
+        validation_results, testing_results = train_test_split(
+            tmp, test_size=0.5, random_state=DEFAULT_RANDOM_STATE
+        )
+        return training_results, validation_results, testing_results
 
     def __init__(self, mtsa_results: List[MTSAResult], target_name: str):
         self.mtsa_results = mtsa_results
@@ -84,104 +90,58 @@ class GNNDataUtil:
             self.target_name = target_name
         else:
             raise ValueError(f"Target name {target_name} not allowed")
-        self.training_mtsa_results, self.testing_mtsa_results = (
-            self._split_mtsa_results(self.mtsa_results)
-        )
+        (
+            self.training_mtsa_results,
+            self.validation_mtsa_results,
+            self.testing_mtsa_results,
+        ) = self._split_mtsa_results(self.mtsa_results)
+        self.preprocessor = LTSStructurePreprocessor()
 
     def get_lts_graph(
         self,
-        lts: List[List[int]],
-        lts_number: int,
-        number_of_states: int,
-        is_environment: bool,
+        model_feature: ModelFeature,
     ) -> Data:
-        error_state_number = number_of_states - 1
+        node_features_tensor = torch.tensor(
+            model_feature.node_features, dtype=torch.float
+        ).to(DEVICE)
 
-        edge_index = []
-        edge_weight = []
-        for transition in lts:
-            (src_state_number, dst_state_number, action_weight, is_controllable) = (
-                transition
-            )
-
-            if dst_state_number != -1:
-                edge_index.append([src_state_number, dst_state_number])
-            else:
-                # if dst is error state
-                edge_index.append([src_state_number, error_state_number])
-            edge_weight.append(action_weight)
-        edge_index_tensor = (
-            torch.tensor(edge_index, dtype=torch.int).t().contiguous().to(DEVICE)
+        # TEMP
+        edge_indexes = []
+        for index, edge_index in enumerate(model_feature.edge_indexes):
+            if index % 2 == 0:
+                edge_indexes.append(edge_index)
+        edge_indexes_tensor = (
+            torch.tensor(edge_indexes, dtype=torch.long).t().contiguous().to(DEVICE)
         )
-        edge_weight_tensor = (
-            torch.tensor(edge_weight, dtype=torch.float).to(DEVICE).to(DEVICE)
-        )
-
-        # node_feature: (is_environment, lts_number, state_number, is_error_state, is_start_state)
-        if is_environment:
-            # environment
-            node_features = []
-            for index in range(number_of_states):
-                if index == 0:
-                    # start state
-                    node_features.append([1, lts_number, index, 0, 1])
-                else:
-                    node_features.append([1, lts_number, index, 0, 0])
-        else:
-            # requirement
-            node_features = []
-            for index in range(number_of_states):
-                if index == 0:
-                    # start state
-                    node_features.append([0, lts_number, index, 0, 1])
-                elif index == number_of_states - 1:
-                    # error state
-                    node_features.append([0, lts_number, index, 1, 0])
-                else:
-                    node_features.append([0, lts_number, index, 0, 1])
-        node_features_tensor = torch.tensor(node_features, dtype=torch.float).to(DEVICE)
+        edge_weights = []
+        for index, edge_attr in enumerate(model_feature.edge_attributes):
+            if index % 2 == 0:
+                edge_weights.append(edge_attr[0])
+        edge_weights_tensor = torch.tensor(edge_weights, dtype=torch.float).to(DEVICE)
 
         lts_embedding = Data(
             x=node_features_tensor,
-            edge_index=edge_index_tensor,
-            edge_weight=edge_weight_tensor,
+            edge_index=edge_indexes_tensor,
+            edge_weight=edge_weights_tensor,
         ).to(DEVICE)
 
         return lts_embedding
 
-    def get_lts_set_graph(self, mtsa_result: MTSAResult):
-        # initialize
-        mtsa_result.initialize_quantified_structures()
-
+    def get_lts_set_graph(self, result_feature: List[ModelFeature]) -> Batch:
         lts_embeddings = []
-        cnt = 0
-        for environment in mtsa_result.initial_models.environments:
-            lts_embeddings.append(
-                self.get_lts_graph(
-                    lts=environment.quantified_structure,
-                    lts_number=cnt,
-                    number_of_states=environment.number_of_states,
-                    is_environment=True,
-                )
-            )
-        for requirement in mtsa_result.initial_models.requirements:
-            lts_embeddings.append(
-                self.get_lts_graph(
-                    lts=requirement.quantified_structure,
-                    lts_number=cnt,
-                    number_of_states=requirement.number_of_states,
-                    is_environment=False,
-                )
-            )
+        for model_feature in result_feature:
+            lts_embeddings.append(self.get_lts_graph(model_feature))
 
         batch = Batch.from_data_list(lts_embeddings)
         return batch
 
     def get_training_dataset(self) -> List[TrainingData]:
         dataset = []
-        for mtsa_result in self.training_mtsa_results:
-            mtsa_result: MTSAResult
-            lts_set_graph = self.get_lts_set_graph(mtsa_result)
+        mtsa_results = self.training_mtsa_results
+        result_features = self.preprocessor.preprocess(mtsa_results)
+        for index, result_feature in enumerate(result_features):
+            mtsa_result = mtsa_results[index]
+            lts_set_graph = self.get_lts_set_graph(result_feature)
             match self.target_name:
                 case "calculation_time":
                     target = mtsa_result.duration_ms
@@ -191,19 +151,45 @@ class GNNDataUtil:
                     raise ValueError(f"Unknown target name: {self.target_name}")
             target_tensor = torch.tensor(target).to(DEVICE)
 
-            training_data = TrainingData(
+            data = TrainingData(
                 lts_name=mtsa_result.lts,
                 lts_set_graph=lts_set_graph,
                 target=target_tensor,
             )
-            dataset.append(training_data)
+            dataset.append(data)
+        return dataset
+
+    def get_validation_dataset(self) -> List[ValidationData]:
+        dataset = []
+        mtsa_results = self.validation_mtsa_results
+        result_features = self.preprocessor.preprocess(mtsa_results)
+        for index, result_feature in enumerate(result_features):
+            mtsa_result = mtsa_results[index]
+            lts_set_graph = self.get_lts_set_graph(result_feature)
+            match self.target_name:
+                case "calculation_time":
+                    target = mtsa_result.duration_ms
+                case "memory_usage":
+                    target = mtsa_result.max_memory_usage_kb
+                case _:
+                    raise ValueError(f"Unknown target name: {self.target_name}")
+            target_tensor = torch.tensor(target).to(DEVICE)
+
+            data = ValidationData(
+                lts_name=mtsa_result.lts,
+                lts_set_graph=lts_set_graph,
+                target=target_tensor,
+            )
+            dataset.append(data)
         return dataset
 
     def get_testing_dataset(self) -> List[TestingData]:
         dataset = []
-        for mtsa_result in self.testing_mtsa_results:
-            mtsa_result: MTSAResult
-            lts_set_graph = self.get_lts_set_graph(mtsa_result)
+        mtsa_results = self.testing_mtsa_results
+        result_features = self.preprocessor.preprocess(mtsa_results)
+        for index, result_feature in enumerate(result_features):
+            mtsa_result = mtsa_results[index]
+            lts_set_graph = self.get_lts_set_graph(result_feature)
             match self.target_name:
                 case "calculation_time":
                     target = mtsa_result.duration_ms
@@ -213,10 +199,10 @@ class GNNDataUtil:
                     raise ValueError(f"Unknown target name: {self.target_name}")
             target_tensor = torch.tensor(target).to(DEVICE)
 
-            testing_data = TestingData(
+            data = TestingData(
                 lts_name=mtsa_result.lts,
                 lts_set_graph=lts_set_graph,
                 target=target_tensor,
             )
-            dataset.append(testing_data)
+            dataset.append(data)
         return dataset

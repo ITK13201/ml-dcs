@@ -15,6 +15,7 @@ from ml_dcs.domain.ml_gnn import (
     GNNTrainingResultEpoch,
     TestingData,
     TrainingData,
+    ValidationData,
 )
 from ml_dcs.internal.ml.gnn import LTSGNN, GNNDataUtil, LTSRegressionModel
 from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
@@ -121,37 +122,50 @@ class GNNEvaluator:
         )
 
     def test(
-        self, testing_dataset: List[TestingData], verbose=False
+        self,
+        dataset: List[ValidationData | TestingData],
+        verbose=False,
+        is_validation=False,
     ) -> GNNTestingResult:
         self.lts_gnn_model.eval().to(DEVICE)
         self.regression_model.eval().to(DEVICE)
 
         task_results = []
         with torch.no_grad():
-            for testing_data in testing_dataset:
-                lts_set_embedding = self.lts_gnn_model(testing_data.lts_set_graph)
+            for data in dataset:
+                lts_set_embedding = self.lts_gnn_model(data.lts_set_graph)
                 prediction = self.regression_model(lts_set_embedding)
                 prediction = torch.mean(prediction).to(DEVICE)
-                loss = F.mse_loss(prediction, testing_data.target)
+                loss = F.mse_loss(prediction, data.target)
 
                 task_result = GNNTestingResultTask(
-                    lts_name=testing_data.lts_name,
+                    lts_name=data.lts_name,
                     loss=loss.item(),
-                    actual=testing_data.target.item(),
+                    actual=data.target.item(),
                     predicted=prediction.item(),
                 )
                 task_results.append(task_result)
                 if verbose:
-                    logger.info("testing result: %s", task_result.model_dump_json())
+                    if is_validation:
+                        logger.info(
+                            "validation result: %s", task_result.model_dump_json()
+                        )
+                    else:
+                        logger.info("testing result: %s", task_result.model_dump_json())
 
         result = GNNTestingResult(task_results=task_results)
         if verbose:
-            logger.info("[+] testing_loss_avg: {}".format(result.loss_avg))
+            if is_validation:
+                logger.info("[+] validation_loss_avg: {}".format(result.loss_avg))
+            else:
+                logger.info("[+] testing_loss_avg: {}".format(result.loss_avg))
 
         return result
 
     def train(
-        self, training_dataset: List[TrainingData], testing_dataset: List[TestingData]
+        self,
+        training_dataset: List[TrainingData],
+        validation_dataset: List[ValidationData],
     ) -> GNNTrainingResult:
         started_at = datetime.datetime.now()
 
@@ -193,9 +207,11 @@ class GNNEvaluator:
             # ===
             # VALIDATION
             # ===
-            testing_result = self.test(testing_dataset=testing_dataset, verbose=False)
+            validation_result = self.test(
+                dataset=validation_dataset, verbose=False, is_validation=True
+            )
             early_stopping(
-                val_loss=testing_result.loss_avg,
+                val_loss=validation_result.loss_avg,
                 lts_gnn_model=self.lts_gnn_model,
                 regression_model=self.regression_model,
             )
@@ -206,7 +222,7 @@ class GNNEvaluator:
             task_finished_at = datetime.datetime.now()
             epoch_result = GNNTrainingResultEpoch(
                 training_loss_avg=loss_average,
-                testing_loss_avg=testing_result.loss_avg,
+                validation_loss_avg=validation_result.loss_avg,
                 started_at=task_started_at,
                 finished_at=task_finished_at,
             )
@@ -219,8 +235,8 @@ class GNNEvaluator:
                         {
                             "epoch": f"{epoch + 1}/{self.max_epochs}",
                             "train_loss_avg": str(loss_average),
-                            "test_loss_avg": str(testing_result.loss_avg),
-                            "test_r_squared": str(testing_result.r_squared),
+                            "val_loss_avg": str(validation_result.loss_avg),
+                            "val_r_squared": str(validation_result.r_squared),
                         }
                     ),
                 )
@@ -231,7 +247,7 @@ class GNNEvaluator:
                         {
                             "epoch": f"{epoch + 1}/{self.max_epochs}",
                             "train_loss_avg": str(loss_average),
-                            "test_loss_avg": str(testing_result.loss_avg),
+                            "val_loss_avg": str(validation_result.loss_avg),
                         }
                     ),
                 )
@@ -263,13 +279,13 @@ class GNNEvaluator:
         mtsa_results = mtsa_data_util.get_parsed_data()
 
         gnn_data_util = GNNDataUtil(mtsa_results, self.target_name)
+        training_dataset = gnn_data_util.get_training_dataset()
+        validation_dataset = gnn_data_util.get_validation_dataset()
         testing_dataset = gnn_data_util.get_testing_dataset()
 
         # train
         logger.info("training started")
-        training_result = self.train(
-            gnn_data_util.get_training_dataset(), testing_dataset
-        )
+        training_result = self.train(training_dataset, validation_dataset)
         with open(
             self.training_result_output_file_path, mode="w", encoding="utf-8"
         ) as f:
@@ -286,7 +302,7 @@ class GNNEvaluator:
 
         # test
         logger.info("testing started")
-        testing_result = self.test(testing_dataset=testing_dataset, verbose=True)
+        testing_result = self.test(dataset=testing_dataset, verbose=True)
         with open(
             self.testing_result_output_file_path, mode="w", encoding="utf-8"
         ) as f:

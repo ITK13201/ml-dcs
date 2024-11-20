@@ -1,6 +1,6 @@
 import dataclasses
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Literal
 
 from pydantic import BaseModel, ConfigDict, computed_field
 from sklearn.metrics import mean_absolute_error, r2_score
@@ -19,13 +19,17 @@ class TrainingData(GNNInputData):
     pass
 
 
+class ValidationData(GNNInputData):
+    pass
+
+
 class TestingData(GNNInputData):
     pass
 
 
 class GNNTrainingResultEpoch(BaseModel):
     training_loss_avg: float
-    testing_loss_avg: float
+    validation_loss_avg: float
     started_at: datetime
     finished_at: datetime
 
@@ -158,3 +162,42 @@ class GNNTestingResult(BaseModel):
             return self._r_squared
         else:
             return self._r_squared
+
+
+# ===
+# Preprocessing
+# ===
+class NodeFeature(BaseModel):
+    input_model_type: Literal[0, 1]
+    input_model_number: float
+    state_number: float
+    is_not_error_state: Literal[-1, 1]
+    is_start_state: Literal[0, 1]
+
+    def get_array(self):
+        return [
+            self.input_model_type,
+            self.input_model_number,
+            self.state_number,
+            self.is_not_error_state,
+            self.is_start_state,
+        ]
+
+
+class EdgeAttribute(BaseModel):
+    action: float
+    is_controllable: Literal[0, 1]
+    is_forward: Literal[-1, 1]
+
+    def get_array(self):
+        return [
+            self.action,
+            self.is_controllable,
+            self.is_forward,
+        ]
+
+
+class ModelFeature(BaseModel):
+    node_features: List[List[float]]
+    edge_indexes: List[List[int]]
+    edge_attributes: List[List[float]]

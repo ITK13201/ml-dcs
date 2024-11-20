@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import List
 
-import scipy.stats
 from pydantic import (
     BaseModel,
     ByteSize,
@@ -11,7 +10,6 @@ from pydantic import (
     field_validator,
 )
 from pydantic.alias_generators import to_camel
-from sklearn import preprocessing
 
 
 # ===
@@ -29,18 +27,6 @@ class MTSAResultInitialModelsEnvironment(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._quantified_structure: List[List[int]] | None = None
-
-    @property
-    def quantified_structure(self) -> List[List[int]]:
-        if self._quantified_structure is None:
-            raise RuntimeError("qualified_structure not initialized")
-        else:
-            return self._quantified_structure
-
-    @quantified_structure.setter
-    def quantified_structure(self, value: List[List[int]]):
-        self._quantified_structure = value
 
 
 class MTSAResultInitialModelsRequirement(BaseModel):
@@ -55,18 +41,6 @@ class MTSAResultInitialModelsRequirement(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._quantified_structure: List[List[int]] | None = None
-
-    @property
-    def quantified_structure(self) -> List[List[int]]:
-        if self._quantified_structure is None:
-            raise RuntimeError("quantified_structure not initialized")
-        else:
-            return self._quantified_structure
-
-    @quantified_structure.setter
-    def quantified_structure(self, value: List[List[int]]):
-        self._quantified_structure = value
 
 
 # ===
@@ -191,10 +165,6 @@ class MTSAResultInitialModels(BaseModel):
         self._sum_of_number_of_transitions_of_requirements = None
         self._sum_of_number_of_controllable_actions_of_requirements = None
         self._sum_of_number_of_uncontrollable_actions_of_requirements = None
-        # gnn
-        self._actions = None
-        self._weight_by_action = None
-        self._max_number_of_transitions = None
 
     @property
     def number_of_models_of_environments(self) -> int:
@@ -279,69 +249,6 @@ class MTSAResultInitialModels(BaseModel):
                 result += requirement.number_of_uncontrollable_actions
             self._sum_of_number_of_uncontrollable_actions_of_requirements = result
         return self._sum_of_number_of_uncontrollable_actions_of_requirements
-
-    @property
-    def actions(self) -> List[str]:
-        if self._actions is None:
-            actions_set = set()
-            for environment in self.environments:
-                for transition in environment.structure:
-                    action_name = transition[2]
-                    actions_set.add(action_name)
-            for requirement in self.requirements:
-                for transition in requirement.structure:
-                    action_name = transition[2]
-                    actions_set.add(action_name)
-            self._actions = list(actions_set)
-            return self._actions
-        else:
-            return self._actions
-
-    @property
-    def weight_by_action(self) -> Dict[str, float]:
-        if self._weight_by_action is None:
-            labeled_weights = [index for index, action in enumerate(self.actions)]
-            normalized_weights: List[float] = list(
-                preprocessing.minmax_scale(labeled_weights)
-            )
-            data = {}
-            for index, weight in enumerate(normalized_weights):
-                data[self.actions[index]] = weight
-            self._weight_by_action = data
-            return self._weight_by_action
-        else:
-            return self._weight_by_action
-
-    def initialize_quantified_structures(self):
-        for environment in self.environments:
-            normalized_structure = []
-            for transition in environment.structure:
-                (src_state_number, dst_state_number, action_name, is_controllable) = (
-                    transition
-                )
-                normalized_transition = [
-                    int(src_state_number),
-                    int(dst_state_number),
-                    self.weight_by_action[action_name],
-                    int(is_controllable),
-                ]
-                normalized_structure.append(normalized_transition)
-            environment.quantified_structure = normalized_structure
-
-        for requirement in self.requirements:
-            normalized_structure = []
-            for transition in requirement.structure:
-                (src_state_number, dst_state_number, action_name, is_controllable) = (
-                    transition
-                )
-                normalized_transition = [
-                    int(src_state_number),
-                    int(dst_state_number),
-                    self.weight_by_action[action_name],
-                    int(is_controllable),
-                ]
-                normalized_structure.append(normalized_transition)
-            requirement.quantified_structure = normalized_structure
 
     @property
     def max_number_of_transitions(self):
