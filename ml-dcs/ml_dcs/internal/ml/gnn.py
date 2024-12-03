@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch_geometric.data import Batch, Data
-from torch_geometric.nn import GATConv, GCNConv, global_mean_pool
+from torch_geometric.nn import GATConv, global_mean_pool
 
 from ml_dcs.config.config import DEVICE
 from ml_dcs.domain.ml_gnn import ModelFeature, TestingData, TrainingData, ValidationData
@@ -43,9 +43,10 @@ class LTSGNN(torch.nn.Module):
 
         # 1st graph convolution
         x = self.conv1(x=x, edge_index=edge_index, edge_attr=edge_attr)
+
         x = F.relu(x)
 
-        # 2nd graphh convolution
+        # 2nd graph convolution
         x = self.conv2(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
         # pooling

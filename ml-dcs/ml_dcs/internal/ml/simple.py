@@ -18,10 +18,16 @@ class MLSimpleDataUtil:
         self, df: pd.DataFrame
     ) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series]:
         # split dataset to train and test
-        x_train, x_test, y_train, y_test = train_test_split(
+        x_train, x_tmp, y_train, y_tmp = train_test_split(
             df.iloc[:, :-1],
             df.iloc[:, -1],
-            test_size=0.2,
+            test_size=0.3,
+            random_state=DEFAULT_RANDOM_STATE,
+        )
+        _, x_test, _, y_test = train_test_split(
+            x_tmp,
+            y_tmp,
+            test_size=0.5,
             random_state=DEFAULT_RANDOM_STATE,
         )
         # standardize
