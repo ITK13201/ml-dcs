@@ -56,6 +56,7 @@ class GNNTrainingResult(BaseModel):
         super().__init__(*args, **kwargs)
         self._epochs = None
         self._duration = None
+        self._epoch_duration_avg = None
 
     @computed_field
     @property
@@ -75,12 +76,41 @@ class GNNTrainingResult(BaseModel):
         else:
             return self._duration
 
+    @computed_field
+    @property
+    def epoch_duration_avg(self) -> timedelta:
+        if self._epoch_duration_avg is None:
+            durations = []
+            for epoch in self.epoch_results:
+                durations.append(epoch.duration.total_seconds())
+            s = sum(durations)
+            avg = s / self.epochs
+            self._epoch_duration_avg = timedelta(seconds=avg)
+            return self._epoch_duration_avg
+        else:
+            return self._epoch_duration_avg
+
 
 class GNNTestingResultTask(BaseModel):
     lts_name: str
     loss: float
     actual: float
     predicted: float
+    started_at: datetime
+    finished_at: datetime
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._duration = None
+
+    @computed_field
+    @property
+    def duration(self) -> timedelta:
+        if self._duration is None:
+            self._duration = self.finished_at - self.started_at
+            return self._duration
+        else:
+            return self._duration
 
 
 class GNNTestingResult(BaseModel):
@@ -101,6 +131,7 @@ class GNNTestingResult(BaseModel):
         self._loss_avg = None
         self._mae = None
         self._r_squared = None
+        self._duration_avg = None
 
     @property
     def task_results_length(self) -> int:
@@ -162,6 +193,21 @@ class GNNTestingResult(BaseModel):
             return self._r_squared
         else:
             return self._r_squared
+
+    @computed_field
+    @property
+    def duration_avg(self) -> timedelta:
+        if self._duration_avg is None:
+            durations = []
+            for result in self.task_results:
+                durations.append(result.duration.total_seconds())
+            s = sum(durations)
+            avg = s / self.task_results_length
+            self._duration_avg = timedelta(seconds=avg)
+            return self._duration_avg
+        else:
+            return self._duration_avg
+
 
 
 # ===

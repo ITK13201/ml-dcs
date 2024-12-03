@@ -260,9 +260,23 @@ class MLSimpleTestingResultSet(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._duration = None
+        self._duration_avg = None
         self._mae_variance = None
         self._r_squared_variance = None
+
+    @computed_field
+    @property
+    def duration_avg(self) -> timedelta:
+        if self._duration_avg is None:
+            durations = []
+            for result in self.results:
+                durations.append(result.duration.total_seconds())
+            s = sum(durations)
+            avg = s / len(self.results)
+            self._duration_avg = timedelta(seconds=avg)
+            return self._duration_avg
+        else:
+            return self._duration_avg
 
     @computed_field
     @property
@@ -283,3 +297,4 @@ class MLSimpleTestingResultSet(BaseModel):
             return self._r_squared_variance
         else:
             return self._r_squared_variance
+

@@ -30,7 +30,7 @@ class EarlyStopping:
         self,
         lts_gnn_model_output_file_path: str,
         regression_model_output_file_path: str,
-        patience=10,
+        patience=20,
         verbose=False,
     ):
         # === args ===
@@ -133,16 +133,21 @@ class GNNEvaluator:
         task_results = []
         with torch.no_grad():
             for data in dataset:
+                started_at = datetime.datetime.now()
+
                 lts_set_embedding = self.lts_gnn_model(data.lts_set_graph)
                 prediction = self.regression_model(lts_set_embedding)
                 prediction = torch.mean(prediction).to(DEVICE)
                 loss = F.mse_loss(prediction, data.target)
 
+                finished_at = datetime.datetime.now()
                 task_result = GNNTestingResultTask(
                     lts_name=data.lts_name,
                     loss=loss.item(),
                     actual=data.target.item(),
                     predicted=prediction.item(),
+                    started_at=started_at,
+                    finished_at=finished_at,
                 )
                 task_results.append(task_result)
                 if verbose:
