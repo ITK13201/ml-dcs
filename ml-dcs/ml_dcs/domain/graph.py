@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 from pydantic import BaseModel
 
+from ml_dcs.domain.evaluation import EvaluationResult
 from ml_dcs.domain.ml_gnn import GNNTestingResult, GNNTrainingResult
 from ml_dcs.domain.ml_simple import MLSimpleTestingResultSet
 
@@ -26,6 +27,13 @@ class PredictionAccuracyGraphData(GraphData):
 
     @classmethod
     def from_ml_gnn_class(cls, data: GNNTestingResult) -> "GraphData":
+        return cls(
+            x=data.actual_values,
+            y=data.predicted_values,
+        )
+
+    @classmethod
+    def from_evaluation_result_class(cls, data: EvaluationResult) -> "GraphData":
         return cls(
             x=data.actual_values,
             y=data.predicted_values,
