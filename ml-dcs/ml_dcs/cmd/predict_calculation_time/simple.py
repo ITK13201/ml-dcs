@@ -48,7 +48,7 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             help="Signal directory path",
         )
         parser.add_argument(
-            "-s",
+            "-t",
             "--threshold",
             type=float,
             required=False,
