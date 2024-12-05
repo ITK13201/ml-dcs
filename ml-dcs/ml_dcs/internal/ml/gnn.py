@@ -79,6 +79,41 @@ class LTSRegressionModel(torch.nn.Module):
 class GNNDataUtil:
     ALLOWED_TARGET_NAMES: List[str] = ["calculation_time", "memory_usage"]
 
+    def __init__(
+        self, mtsa_results: List[MTSAResult], target_name: str, threshold: float = None
+    ):
+        # args
+        self.mtsa_results = mtsa_results
+        if target_name in self.ALLOWED_TARGET_NAMES:
+            self.target_name = target_name
+        else:
+            raise ValueError(f"Target name {target_name} not allowed")
+        self.threshold = threshold
+        # additional
+        if self.threshold is not None:
+            self.mtsa_results = self._exclude_by_threshold()
+        (
+            self.training_mtsa_results,
+            self.validation_mtsa_results,
+            self.testing_mtsa_results,
+        ) = self._split_mtsa_results(self.mtsa_results)
+        self.preprocessor = LTSStructurePreprocessor()
+
+    def _exclude_by_threshold(self) -> List[MTSAResult]:
+        updated = []
+        for result in self.mtsa_results:
+            match self.target_name:
+                case "calculation_time":
+                    if result.duration_ms > self.threshold:
+                        continue
+                case "memory_usage":
+                    if result.max_memory_usage_kb > self.threshold:
+                        continue
+                case _:
+                    raise ValueError(f"Target name {self.target_name} not allowed")
+            updated.append(result)
+        return updated
+
     def _split_mtsa_results(
         self, mtsa_results: List[MTSAResult]
     ) -> Tuple[List[MTSAResult], List[MTSAResult], List[MTSAResult]]:
@@ -89,19 +124,6 @@ class GNNDataUtil:
             tmp, test_size=0.5, random_state=DEFAULT_RANDOM_STATE
         )
         return training_results, validation_results, testing_results
-
-    def __init__(self, mtsa_results: List[MTSAResult], target_name: str):
-        self.mtsa_results = mtsa_results
-        if target_name in self.ALLOWED_TARGET_NAMES:
-            self.target_name = target_name
-        else:
-            raise ValueError(f"Target name {target_name} not allowed")
-        (
-            self.training_mtsa_results,
-            self.validation_mtsa_results,
-            self.testing_mtsa_results,
-        ) = self._split_mtsa_results(self.mtsa_results)
-        self.preprocessor = LTSStructurePreprocessor()
 
     def get_lts_graph(
         self,

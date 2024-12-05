@@ -32,12 +32,14 @@ class MLSimpleEvaluator:
         testing_result_output_file_path: str,
         algorithm: RegressionAlgorithm,
         target: EvaluationTarget,
+        threshold: float = None,
     ):
         self.input_dir_path = input_dir_path
         self.training_result_output_file_path = training_result_output_file_path
         self.testing_result_output_file_path = testing_result_output_file_path
         self.algorithm = algorithm
         self.target = target
+        self.threshold = threshold
 
     def train(
         self, model: RegressionModel, training_dataset: TrainingDataSet
@@ -80,7 +82,7 @@ class MLSimpleEvaluator:
         mtsa_data_util = MTSADataUtil(input_dir_path=self.input_dir_path)
         mtsa_results = mtsa_data_util.get_parsed_data()
 
-        ml_data_util = MLSimpleDataUtil(mtsa_results, self.target)
+        ml_data_util = MLSimpleDataUtil(mtsa_results, self.target, self.threshold)
         training_dataset = ml_data_util.get_training_dataset()
         testing_dataset = ml_data_util.get_testing_dataset()
 

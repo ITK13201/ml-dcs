@@ -17,9 +17,19 @@ DEFAULT_RANDOM_STATE = 42
 
 
 class MLSimpleDataUtil:
-    def __init__(self, mtsa_results: List[MTSAResult], target: EvaluationTarget):
+    def __init__(
+        self,
+        mtsa_results: List[MTSAResult],
+        target: EvaluationTarget,
+        threshold: float = None,
+    ):
+        # args
         self.mtsa_results = mtsa_results
         self.target = target
+        self.threshold = threshold
+        # additional
+        if self.threshold is not None:
+            self.mtsa_results = self._exclude_by_threshold()
         (
             self.training_mtsa_results,
             self.testing_mtsa_results,
@@ -30,6 +40,21 @@ class MLSimpleDataUtil:
             self.target,
         )
         self.training_dataset, self.testing_dataset = self.preprocessor.preprocess()
+
+    def _exclude_by_threshold(self) -> List[MTSAResult]:
+        updated = []
+        for mtsa_result in self.mtsa_results:
+            match self.target:
+                case EvaluationTarget.CALCULATION_TIME:
+                    if mtsa_result.duration_ms > self.threshold:
+                        continue
+                case EvaluationTarget.MEMORY_USAGE:
+                    if mtsa_result.max_memory_usage_kb > self.threshold:
+                        continue
+                case _:
+                    raise ValueError(f"Not supported: {self.target}")
+            updated.append(mtsa_result)
+        return updated
 
     def _split_mtsa_results(
         self, mtsa_results: List[MTSAResult]

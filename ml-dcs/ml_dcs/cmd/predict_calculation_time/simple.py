@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class PredictCalculationTimeSimpleCommand(BaseCommand):
     name = "simple"
-    help = "Predict memory usage using simple ML methods"
+    help = "Predict calculation time using simple ML methods"
 
     def add_arguments(self, parser: argparse.ArgumentParser):
         parser.add_argument(
@@ -47,6 +47,13 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             required=False,
             help="Signal directory path",
         )
+        parser.add_argument(
+            "-s",
+            "--threshold",
+            type=float,
+            required=False,
+            help="Threshold for calculation time",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,6 +62,7 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
         self.bench_result_file_path = None
         self.output_base_dir_path = None
         self.signal_dir = None
+        self.threshold = None
         # === parameters ===
         self.output_dir_path = None
         self.target = EvaluationTarget.CALCULATION_TIME
@@ -67,6 +75,7 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
         self.bench_result_file_path: str = args.bench_result_file
         self.output_base_dir_path: str = args.output_base_dir_path
         self.signal_dir: str | None = args.signal_dir
+        self.threshold: float = args.threshold
 
         # build output dir
         now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -116,6 +125,7 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.GRADIENT_BOOSTING_DECISION_TREE,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
@@ -130,6 +140,7 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.RANDOM_FOREST,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
@@ -144,6 +155,7 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.DECISION_TREE,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
@@ -158,5 +170,6 @@ class PredictCalculationTimeSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.LOGISTIC_REGRESSION,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()

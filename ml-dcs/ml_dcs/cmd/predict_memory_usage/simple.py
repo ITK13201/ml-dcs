@@ -47,6 +47,13 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
             required=False,
             help="Signal directory path",
         )
+        parser.add_argument(
+            "-t",
+            "--threshold",
+            type=float,
+            required=False,
+            help="Threshold for memory usage",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,6 +62,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
         self.bench_result_file_path = None
         self.output_base_dir_path = None
         self.signal_dir = None
+        self.threshold = None
         # === parameters ===
         self.output_dir_path = None
         self.target = EvaluationTarget.MEMORY_USAGE
@@ -67,6 +75,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
         self.bench_result_file_path: str = args.bench_result_file
         self.output_base_dir_path: str = args.output_base_dir_path
         self.signal_dir: str | None = args.signal_dir
+        self.threshold: float = args.threshold
 
         # build output dir
         now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -116,6 +125,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.GRADIENT_BOOSTING_DECISION_TREE,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
@@ -130,6 +140,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.RANDOM_FOREST,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
@@ -144,6 +155,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.DECISION_TREE,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
@@ -158,5 +170,6 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
             ),
             algorithm=RegressionAlgorithm.LOGISTIC_REGRESSION,
             target=self.target,
+            threshold=self.threshold,
         )
         evaluator.evaluate()

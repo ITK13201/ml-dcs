@@ -99,6 +99,7 @@ class GNNEvaluator:
         regression_model_output_file_path: str,
         max_epochs: int,
         target_name: str,
+        threshold: float = None,
     ):
         # args
         self.input_dir_path = input_dir_path
@@ -111,6 +112,7 @@ class GNNEvaluator:
             self.target_name = target_name
         else:
             raise ValueError(f"Target name {target_name} not allowed")
+        self.threshold = threshold
 
         # basic parameters
         self.lts_gnn_model = LTSGNN().to(DEVICE)
@@ -283,7 +285,7 @@ class GNNEvaluator:
         mtsa_data_util = MTSADataUtil(self.input_dir_path)
         mtsa_results = mtsa_data_util.get_parsed_data()
 
-        gnn_data_util = GNNDataUtil(mtsa_results, self.target_name)
+        gnn_data_util = GNNDataUtil(mtsa_results, self.target_name, self.threshold)
         training_dataset = gnn_data_util.get_training_dataset()
         validation_dataset = gnn_data_util.get_validation_dataset()
         testing_dataset = gnn_data_util.get_testing_dataset()

@@ -53,6 +53,13 @@ class PredictCalculationTimeGNNCommand(BaseCommand):
             required=False,
             help="Signal directory path",
         )
+        parser.add_argument(
+            "-t",
+            "--threshold",
+            type=float,
+            required=False,
+            help="Threshold for calculation time",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,6 +69,7 @@ class PredictCalculationTimeGNNCommand(BaseCommand):
         self.output_base_dir_path = None
         self.max_epochs = None
         self.signal_dir = None
+        self.threshold = None
         # === parameters ===
         self.target_name = "calculation_time"
         self.output_dir_path = None
@@ -79,6 +87,7 @@ class PredictCalculationTimeGNNCommand(BaseCommand):
         self.output_base_dir_path: str = args.output_base_dir_path
         self.max_epochs: int = int(args.max_epochs)
         self.signal_dir: str | None = args.signal_dir
+        self.threshold: float = args.threshold
 
         # build output dir
         now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -111,6 +120,7 @@ class PredictCalculationTimeGNNCommand(BaseCommand):
             regression_model_output_file_path=self.regression_model_output_file_path,
             max_epochs=self.max_epochs,
             target_name=self.target_name,
+            threshold=self.threshold,
         )
         evaluator.evaluate()
 
