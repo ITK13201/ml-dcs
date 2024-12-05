@@ -17,6 +17,7 @@ class GraphData2(BaseModel):
     y1: List[float]
     y2: List[float]
 
+
 class PredictionAccuracyGraphData(GraphData):
     @classmethod
     def from_ml_simple_class(cls, data: MLSimpleTestingResultSet) -> "GraphData":
@@ -57,7 +58,6 @@ class LearningCurveGraphData(GraphData2):
         return cls(x=x, y1=y1, y2=y2)
 
 
-
 class Graph(BaseModel):
     data: PredictionAccuracyGraphData
     x_label: str
@@ -66,6 +66,7 @@ class Graph(BaseModel):
     y_lim: Tuple[float, float] | None = None
     order_of_mag: int | None = None
     output_path: str | None = None
+
 
 class Graph2(Graph):
     data: LearningCurveGraphData

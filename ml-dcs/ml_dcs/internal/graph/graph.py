@@ -61,6 +61,7 @@ class GraphUtil:
         self._configure()
         plt.savefig(self.graph.output_path)
 
+
 class Graph2Util:
     def __init__(self, graph: Graph2):
         self.graph = graph
@@ -87,20 +88,24 @@ class Graph2Util:
             self.graph.data.x,
             self.graph.data.y1,
             color="blue",
-            label=self.graph.y1_legend
+            label=self.graph.y1_legend,
         )
         # y2
         ax1.plot(
             self.graph.data.x,
             self.graph.data.y2,
             color="orange",
-            label=self.graph.y2_legend
+            label=self.graph.y2_legend,
         )
 
         # best score plots
         ax2 = plt.gca()
-        x = np.linspace(max(self.graph.data.x)-self.early_stopping_threshold, max(self.graph.data.x)-self.early_stopping_threshold, 100)
-        y = np.linspace(-10 ** 15, 10 ** 15, 100)
+        x = np.linspace(
+            max(self.graph.data.x) - self.early_stopping_threshold,
+            max(self.graph.data.x) - self.early_stopping_threshold,
+            100,
+        )
+        y = np.linspace(-(10**15), 10**15, 100)
         ax2.plot(x, y, linestyle="--", color="red")
 
         plt.legend(loc="upper right")

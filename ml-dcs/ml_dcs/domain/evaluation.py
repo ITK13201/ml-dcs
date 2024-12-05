@@ -1,8 +1,13 @@
-from datetime import datetime, timedelta
+from enum import Enum
 from typing import List
 
-from pydantic import computed_field, BaseModel
+from pydantic import BaseModel, computed_field
 from sklearn.metrics import mean_absolute_error, r2_score
+
+
+class EvaluationTarget(Enum):
+    CALCULATION_TIME = "Calculation Time"
+    MEMORY_USAGE = "Memory Usage"
 
 
 class EvaluationResult(BaseModel):

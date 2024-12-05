@@ -4,7 +4,7 @@ import logging
 import os
 
 from ml_dcs.cmd.base import BaseCommand
-from ml_dcs.domain.ml_simple import MLMemoryUsagePredictionInput2
+from ml_dcs.domain.evaluation import EvaluationTarget
 from ml_dcs.internal.ml.simple import RegressionAlgorithm
 from ml_dcs.internal.signal.signal import SignalUtil
 from ml_dcs.usecases.simple_evaluator import MLSimpleEvaluator
@@ -57,7 +57,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
         self.signal_dir = None
         # === parameters ===
         self.output_dir_path = None
-        self.ml_input_class = MLMemoryUsagePredictionInput2
+        self.target = EvaluationTarget.MEMORY_USAGE
 
     def execute(self, args: argparse.Namespace):
         logger.info("PredictMemoryUsageSimpleCommand started")
@@ -115,7 +115,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
                 "GBDT"
             ),
             algorithm=RegressionAlgorithm.GRADIENT_BOOSTING_DECISION_TREE,
-            ml_input_class=self.ml_input_class,
+            target=self.target,
         )
         evaluator.evaluate()
 
@@ -129,7 +129,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
                 "RF"
             ),
             algorithm=RegressionAlgorithm.RANDOM_FOREST,
-            ml_input_class=self.ml_input_class,
+            target=self.target,
         )
         evaluator.evaluate()
 
@@ -143,7 +143,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
                 "DT"
             ),
             algorithm=RegressionAlgorithm.DECISION_TREE,
-            ml_input_class=self.ml_input_class,
+            target=self.target,
         )
         evaluator.evaluate()
 
@@ -157,6 +157,6 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
                 "LR"
             ),
             algorithm=RegressionAlgorithm.LOGISTIC_REGRESSION,
-            ml_input_class=self.ml_input_class,
+            target=self.target,
         )
         evaluator.evaluate()

@@ -209,7 +209,6 @@ class GNNTestingResult(BaseModel):
             return self._duration_avg
 
 
-
 # ===
 # Preprocessing
 # ===

@@ -1,8 +1,10 @@
+import dataclasses
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import List
 
 import numpy as np
+import pandas as pd
 from pydantic import BaseModel, computed_field
 from sklearn.metrics import mean_absolute_error, r2_score
 
@@ -206,6 +208,7 @@ class MLSimpleTrainingResultSet(BaseModel):
 class MLSimpleTestingResult(BaseModel):
     algorithm: str
     random_state: int
+    lts_names: List[str]
     actual_values: List[float]
     predicted_values: List[float]
     started_at: datetime
@@ -298,3 +301,17 @@ class MLSimpleTestingResultSet(BaseModel):
         else:
             return self._r_squared_variance
 
+
+@dataclasses.dataclass
+class SimpleInputData:
+    lts_names: List[str]
+    x: np.ndarray
+    y: pd.Series
+
+
+class TrainingDataSet(SimpleInputData):
+    pass
+
+
+class TestingDataSet(SimpleInputData):
+    pass

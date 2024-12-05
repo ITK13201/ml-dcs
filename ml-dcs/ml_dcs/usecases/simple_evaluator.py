@@ -1,18 +1,16 @@
 import datetime
 import json
 from logging import getLogger
-from typing import Type
 
-import numpy as np
-import pandas as pd
-
+from ml_dcs.domain.evaluation import EvaluationTarget
 from ml_dcs.domain.ml_simple import (
-    BaseMLInput,
     MLSimpleTestingResult,
     MLSimpleTestingResultFinal,
     MLSimpleTestingResultSet,
     MLSimpleTrainingResult,
     MLSimpleTrainingResultSet,
+    TestingDataSet,
+    TrainingDataSet,
 )
 from ml_dcs.internal.ml.simple import (
     MLSimpleDataUtil,
@@ -33,20 +31,20 @@ class MLSimpleEvaluator:
         training_result_output_file_path: str,
         testing_result_output_file_path: str,
         algorithm: RegressionAlgorithm,
-        ml_input_class: Type[BaseMLInput],
+        target: EvaluationTarget,
     ):
         self.input_dir_path = input_dir_path
         self.training_result_output_file_path = training_result_output_file_path
         self.testing_result_output_file_path = testing_result_output_file_path
         self.algorithm = algorithm
-        self.ml_input_class = ml_input_class
+        self.target = target
 
     def train(
-        self, model: RegressionModel, x_train_std: np.ndarray, y_train: pd.Series
+        self, model: RegressionModel, training_dataset: TrainingDataSet
     ) -> MLSimpleTrainingResult:
         started_at = datetime.datetime.now()
 
-        model.train(x_train_std, y_train)
+        model.train(training_dataset.x, training_dataset.y)
 
         finished_at = datetime.datetime.now()
         result = MLSimpleTrainingResult(
@@ -58,33 +56,33 @@ class MLSimpleEvaluator:
         return result
 
     def test(
-        self, model: RegressionModel, x_test_std: np.ndarray, y_test: pd.Series
+        self, model: RegressionModel, testing_dataset: TestingDataSet
     ) -> MLSimpleTestingResult:
         started_at = datetime.datetime.now()
 
-        predicted_values = model.predict(x_test_std)
+        predicted_values = model.predict(testing_dataset.x)
 
         finished_at = datetime.datetime.now()
         result = MLSimpleTestingResult(
             algorithm=self.algorithm.value,
             random_state=model.random_state,
-            actual_values=y_test.values.tolist(),
+            lts_names=testing_dataset.lts_names,
+            actual_values=testing_dataset.y.values.tolist(),
             predicted_values=predicted_values.tolist(),
             started_at=started_at,
             finished_at=finished_at,
         )
         return result
 
-    def evaluate(
-        self,
-    ):
+    def evaluate(self):
         # load data
         logger.info("loading data...")
         mtsa_data_util = MTSADataUtil(input_dir_path=self.input_dir_path)
-        df = mtsa_data_util.get_dataframe(ml_input_class=self.ml_input_class)
+        mtsa_results = mtsa_data_util.get_parsed_data()
 
-        ml_data_util = MLSimpleDataUtil(df)
-        x_train_std, x_test_std, y_train, y_test = ml_data_util.get_dataset()
+        ml_data_util = MLSimpleDataUtil(mtsa_results, self.target)
+        training_dataset = ml_data_util.get_training_dataset()
+        testing_dataset = ml_data_util.get_testing_dataset()
 
         # evaluate
         logger.info("evaluation started")
@@ -95,8 +93,8 @@ class MLSimpleEvaluator:
         random_states_length = len(self.RANDOM_STATES)
         for index, random_state in enumerate(self.RANDOM_STATES):
             model = RegressionModel(algorithm=self.algorithm, random_state=random_state)
-            train_result = self.train(model, x_train_std, y_train)
-            test_result = self.test(model, x_test_std, y_test)
+            train_result = self.train(model, training_dataset)
+            test_result = self.test(model, testing_dataset)
 
             train_results.append(train_result)
             if test_result_at_best_accuracy is None:

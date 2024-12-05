@@ -1,48 +1,52 @@
-import datetime
 from enum import Enum
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeRegressor
+
+from ml_dcs.domain.evaluation import EvaluationTarget
+from ml_dcs.domain.ml_simple import TestingDataSet, TrainingDataSet
+from ml_dcs.domain.mtsa import MTSAResult
+from ml_dcs.internal.preprocessor.preprocessor import MLSimplePreprocessor
 
 DEFAULT_RANDOM_STATE = 42
 
 
 class MLSimpleDataUtil:
-    def _preprocess(
-        self, df: pd.DataFrame
-    ) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series]:
-        # split dataset to train and test
-        x_train, x_tmp, y_train, y_tmp = train_test_split(
-            df.iloc[:, :-1],
-            df.iloc[:, -1],
-            test_size=0.3,
-            random_state=DEFAULT_RANDOM_STATE,
+    def __init__(self, mtsa_results: List[MTSAResult], target: EvaluationTarget):
+        self.mtsa_results = mtsa_results
+        self.target = target
+        (
+            self.training_mtsa_results,
+            self.testing_mtsa_results,
+        ) = self._split_mtsa_results(self.mtsa_results)
+        self.preprocessor = MLSimplePreprocessor(
+            self.training_mtsa_results,
+            self.testing_mtsa_results,
+            self.target,
         )
-        _, x_test, _, y_test = train_test_split(
-            x_tmp,
-            y_tmp,
-            test_size=0.5,
-            random_state=DEFAULT_RANDOM_STATE,
+        self.training_dataset, self.testing_dataset = self.preprocessor.preprocess()
+
+    def _split_mtsa_results(
+        self, mtsa_results: List[MTSAResult]
+    ) -> Tuple[List[MTSAResult], List[MTSAResult]]:
+        training_results, tmp = train_test_split(
+            mtsa_results, test_size=0.3, random_state=DEFAULT_RANDOM_STATE
         )
-        # standardize
-        scaler = StandardScaler()
-        scaler.fit(x_train)
-        x_train_std: np.ndarray = scaler.transform(x_train)
-        x_test_std: np.ndarray = scaler.transform(x_test)
-        return x_train_std, x_test_std, y_train, y_test
+        _, testing_results = train_test_split(
+            tmp, test_size=0.5, random_state=DEFAULT_RANDOM_STATE
+        )
+        return training_results, testing_results
 
-    def __init__(self, df: pd.DataFrame):
-        self.df = df
-        self.x_train, self.x_test, self.y_train, self.y_test = self._preprocess(df)
+    def get_training_dataset(self) -> TrainingDataSet:
+        return self.training_dataset
 
-    def get_dataset(self) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series]:
-        return self.x_train, self.x_test, self.y_train, self.y_test
+    def get_testing_dataset(self) -> TestingDataSet:
+        return self.testing_dataset
 
 
 class RegressionAlgorithm(Enum):

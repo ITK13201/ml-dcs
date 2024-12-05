@@ -1,11 +1,72 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+from ml_dcs.domain.evaluation import EvaluationTarget
 from ml_dcs.domain.ml_gnn import EdgeAttribute, ModelFeature, NodeFeature
+from ml_dcs.domain.ml_simple import (
+    MLCalculationTimePredictionInput2,
+    MLMemoryUsagePredictionInput2,
+    TestingDataSet,
+    TrainingDataSet,
+)
 from ml_dcs.domain.mtsa import (
     MTSAResult,
     MTSAResultInitialModelsEnvironment,
     MTSAResultInitialModelsRequirement,
 )
+
+
+class MLSimplePreprocessor:
+    def __init__(
+        self,
+        training_results: List[MTSAResult],
+        testing_results: List[MTSAResult],
+        target: EvaluationTarget,
+    ):
+        # args
+        self.training_results = training_results
+        self.testing_results = testing_results
+        self.target = target
+
+        # parameters
+        self.scaler = StandardScaler()
+        match target:
+            case EvaluationTarget.CALCULATION_TIME:
+                self.input_class = MLCalculationTimePredictionInput2
+            case EvaluationTarget.MEMORY_USAGE:
+                self.input_class = MLMemoryUsagePredictionInput2
+            case _:
+                raise RuntimeError(f"Unsupported evaluation target: {target}")
+
+    def preprocess(self) -> Tuple[TrainingDataSet, TestingDataSet]:
+        training_dataset = self._get_training_dataset()
+        testing_dataset = self._get_testing_dataset()
+        self.scaler.fit(training_dataset.x)
+        training_dataset.x = self.scaler.transform(training_dataset.x)
+        testing_dataset.x = self.scaler.transform(testing_dataset.x)
+        return training_dataset, testing_dataset
+
+    def _get_dataset(self, results: List[MTSAResult]) -> dict:
+        lts_names = []
+        data = []
+        for result in results:
+            lts_names.append(result.lts)
+            input_model = self.input_class.init_by_mtsa_result(result)
+            data.append(input_model)
+        dataframe = pd.json_normalize(data)
+        return dict(
+            lts_names=lts_names,
+            x=dataframe.iloc[:, :-1],
+            y=dataframe.iloc[:, -1],
+        )
+
+    def _get_training_dataset(self) -> TrainingDataSet:
+        return TrainingDataSet(**self._get_dataset(self.training_results))
+
+    def _get_testing_dataset(self) -> TestingDataSet:
+        return TestingDataSet(**self._get_dataset(self.testing_results))
 
 
 class MinMaxScaler:
