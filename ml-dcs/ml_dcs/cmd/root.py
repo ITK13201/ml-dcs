@@ -11,6 +11,7 @@ from ml_dcs.cmd.predict_calculation_time.simple import (
 from ml_dcs.cmd.predict_memory_usage.gnn import PredictMemoryUsageGNNCommand
 from ml_dcs.cmd.predict_memory_usage.root import PredictMemoryUsageCommand
 from ml_dcs.cmd.predict_memory_usage.simple import PredictMemoryUsageSimpleCommand
+from ml_dcs.cmd.prepare_dataset import PrepareDatasetCommand
 from ml_dcs.cmd.try_sample import TrySampleCommand
 
 
@@ -54,6 +55,7 @@ class RootCommand:
             PredictMemoryUsageGNNCommand, parent=predict_memory_usage_command
         )
         self.add_command(CheckGPUCommand)
+        self.add_command(PrepareDatasetCommand)
 
     def execute(self):
         args = self.parser.parse_args()

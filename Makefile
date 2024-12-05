@@ -36,3 +36,10 @@ exec-gnn-mu:
 		--bench-result-file $(BENCH_RESULT_FILE_PATH) \
 		--output-base-dir-path $(OUTPUT_DIR_GNN_MU) \
 		--max-epochs $(MAX_EPOCHS)
+
+exec-prepare-dataset:
+	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py prepare_dataset \
+		--input-dir ./tmp/prepare-dataset/input/20241125-000000 \
+		--output-dir ./tmp/prepare-dataset/output/20241125-threshold \
+		--calculation-time-threshold 30 \
+		--memory-usage-threshold 15
