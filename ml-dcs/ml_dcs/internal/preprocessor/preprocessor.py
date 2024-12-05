@@ -54,7 +54,7 @@ class MLSimplePreprocessor:
         for result in results:
             lts_names.append(result.lts)
             input_model = self.input_class.init_by_mtsa_result(result)
-            data.append(input_model)
+            data.append(input_model.model_dump())
         dataframe = pd.json_normalize(data)
         return dict(
             lts_names=lts_names,
