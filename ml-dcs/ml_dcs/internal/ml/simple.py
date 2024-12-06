@@ -1,11 +1,10 @@
 from enum import Enum
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 
 from ml_dcs.domain.evaluation import EvaluationTarget
@@ -19,21 +18,24 @@ DEFAULT_RANDOM_STATE = 42
 class MLSimpleDataUtil:
     def __init__(
         self,
-        mtsa_results: List[MTSAResult],
+        training_mtsa_results: List[MTSAResult],
+        testing_mtsa_results: List[MTSAResult],
         target: EvaluationTarget,
         threshold: float = None,
     ):
         # args
-        self.mtsa_results = mtsa_results
+        self.training_mtsa_results = training_mtsa_results
+        self.testing_mtsa_results = testing_mtsa_results
         self.target = target
         self.threshold = threshold
         # additional
         if self.threshold is not None:
-            self.mtsa_results = self._exclude_by_threshold()
-        (
-            self.training_mtsa_results,
-            self.testing_mtsa_results,
-        ) = self._split_mtsa_results(self.mtsa_results)
+            self.training_mtsa_results = self._exclude_by_threshold(
+                self.training_mtsa_results
+            )
+            self.testing_mtsa_results = self._exclude_by_threshold(
+                self.testing_mtsa_results
+            )
         self.preprocessor = MLSimplePreprocessor(
             self.training_mtsa_results,
             self.testing_mtsa_results,
@@ -41,9 +43,9 @@ class MLSimpleDataUtil:
         )
         self.training_dataset, self.testing_dataset = self.preprocessor.preprocess()
 
-    def _exclude_by_threshold(self) -> List[MTSAResult]:
+    def _exclude_by_threshold(self, results: List[MTSAResult]) -> List[MTSAResult]:
         updated = []
-        for mtsa_result in self.mtsa_results:
+        for mtsa_result in results:
             match self.target:
                 case EvaluationTarget.CALCULATION_TIME:
                     if mtsa_result.duration_ms > self.threshold:
@@ -55,17 +57,6 @@ class MLSimpleDataUtil:
                     raise ValueError(f"Not supported: {self.target}")
             updated.append(mtsa_result)
         return updated
-
-    def _split_mtsa_results(
-        self, mtsa_results: List[MTSAResult]
-    ) -> Tuple[List[MTSAResult], List[MTSAResult]]:
-        training_results, tmp = train_test_split(
-            mtsa_results, test_size=0.3, random_state=DEFAULT_RANDOM_STATE
-        )
-        _, testing_results = train_test_split(
-            tmp, test_size=0.5, random_state=DEFAULT_RANDOM_STATE
-        )
-        return training_results, testing_results
 
     def get_training_dataset(self) -> TrainingDataSet:
         return self.training_dataset

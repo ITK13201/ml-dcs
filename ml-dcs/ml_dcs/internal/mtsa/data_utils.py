@@ -1,11 +1,9 @@
 import json
 import os
 from logging import getLogger
-from typing import Iterator, List, Tuple, Type
+from typing import Iterator, List
 
-import pandas as pd
-
-from ml_dcs.domain.ml_simple import BaseMLInput
+from ml_dcs.domain.dataset import ParsedDataset
 from ml_dcs.domain.mtsa import MTSAResult
 from ml_dcs.domain.mtsa_bench import MTSABenchResult
 
@@ -15,28 +13,34 @@ logger = getLogger(__name__)
 class MTSADataUtil:
     def __init__(self, input_dir_path: str):
         self.input_dir_path = input_dir_path
+        self.training_result_dir_path = os.path.join(input_dir_path, "training")
+        self.validation_result_dir_path = os.path.join(input_dir_path, "validation")
+        self.test_result_dir_path = os.path.join(input_dir_path, "testing")
 
-    def _load_data(self) -> Iterator[dict]:
-        for obj in os.listdir(self.input_dir_path):
-            if os.path.isfile(os.path.join(self.input_dir_path, obj)):
+    def _load_data(self, dir_path: str) -> Iterator[dict]:
+        for obj in os.listdir(dir_path):
+            if os.path.isfile(os.path.join(dir_path, obj)):
                 if obj.endswith(".json"):
-                    with open(os.path.join(self.input_dir_path, obj), "r") as f:
+                    with open(os.path.join(dir_path, obj), "r") as f:
                         data = json.load(f)
                         yield data
 
-    def get_parsed_data(self) -> List[MTSAResult]:
+    def _get_parsed_data(self, path: str) -> List[MTSAResult]:
         data = []
-        for dict_data in self._load_data():
+        for dict_data in self._load_data(path):
             mtsa_result = MTSAResult(**dict_data)
             data.append(mtsa_result)
         return data
 
-    def get_dataframe(self, ml_input_class: Type[BaseMLInput]) -> pd.DataFrame:
-        data = []
-        for parsed in self.get_parsed_data():
-            input_model = ml_input_class.init_by_mtsa_result(parsed)
-            data.append(input_model.model_dump())
-        return pd.json_normalize(data)
+    def get_parsed_dataset(self) -> ParsedDataset:
+        training_data = self._get_parsed_data(self.training_result_dir_path)
+        validation_data = self._get_parsed_data(self.validation_result_dir_path)
+        testing_data = self._get_parsed_data(self.test_result_dir_path)
+        return ParsedDataset(
+            training_data=training_data,
+            validation_data=validation_data,
+            testing_data=testing_data,
+        )
 
 
 class MTSABenchDataUtil:

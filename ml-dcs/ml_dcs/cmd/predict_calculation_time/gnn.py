@@ -87,7 +87,7 @@ class PredictCalculationTimeGNNCommand(BaseCommand):
         self.output_base_dir_path: str = args.output_base_dir_path
         self.max_epochs: int = int(args.max_epochs)
         self.signal_dir: str | None = args.signal_dir
-        self.threshold: float = (args.threshold) * 60 * 1000
+        self.threshold: float = args.threshold * 60 * 1000 if args.threshold else None
 
         # build output dir
         now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

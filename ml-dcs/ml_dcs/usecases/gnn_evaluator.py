@@ -283,9 +283,15 @@ class GNNEvaluator:
         # load data
         logger.info("loading dataset...")
         mtsa_data_util = MTSADataUtil(self.input_dir_path)
-        mtsa_results = mtsa_data_util.get_parsed_data()
+        parsed_dataset = mtsa_data_util.get_parsed_dataset()
 
-        gnn_data_util = GNNDataUtil(mtsa_results, self.target_name, self.threshold)
+        gnn_data_util = GNNDataUtil(
+            training_mtsa_results=parsed_dataset.training_data,
+            validation_mtsa_results=parsed_dataset.validation_data,
+            testing_mtsa_results=parsed_dataset.testing_data,
+            target_name=self.target_name,
+            threshold=self.threshold,
+        )
         training_dataset = gnn_data_util.get_training_dataset()
         validation_dataset = gnn_data_util.get_validation_dataset()
         testing_dataset = gnn_data_util.get_testing_dataset()

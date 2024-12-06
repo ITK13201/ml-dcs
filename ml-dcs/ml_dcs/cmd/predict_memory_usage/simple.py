@@ -52,7 +52,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
             "--threshold",
             type=float,
             required=False,
-            help="Threshold for memory usage",
+            help="Threshold for memory usage (GB)",
         )
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +75,7 @@ class PredictMemoryUsageSimpleCommand(BaseCommand):
         self.bench_result_file_path: str = args.bench_result_file
         self.output_base_dir_path: str = args.output_base_dir_path
         self.signal_dir: str | None = args.signal_dir
-        self.threshold: float = args.threshold
+        self.threshold: float = args.threshold * 1000 * 1000 if args.threshold else None
 
         # build output dir
         now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

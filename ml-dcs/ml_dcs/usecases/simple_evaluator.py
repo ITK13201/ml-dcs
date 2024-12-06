@@ -80,9 +80,14 @@ class MLSimpleEvaluator:
         # load data
         logger.info("loading data...")
         mtsa_data_util = MTSADataUtil(input_dir_path=self.input_dir_path)
-        mtsa_results = mtsa_data_util.get_parsed_data()
+        parsed_dataset = mtsa_data_util.get_parsed_dataset()
 
-        ml_data_util = MLSimpleDataUtil(mtsa_results, self.target, self.threshold)
+        ml_data_util = MLSimpleDataUtil(
+            training_mtsa_results=parsed_dataset.training_data,
+            testing_mtsa_results=parsed_dataset.testing_data,
+            target=self.target,
+            threshold=self.threshold,
+        )
         training_dataset = ml_data_util.get_training_dataset()
         testing_dataset = ml_data_util.get_testing_dataset()
 

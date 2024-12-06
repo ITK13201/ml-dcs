@@ -3,13 +3,13 @@ DOCKER_RUN				= docker compose run --rm
 PYTHON_EXEC				= /opt/conda/bin/python
 # === args ===
 # input
-INPUT_DIR_PATH			= ./tmp/evaluation/20241125-000000/input
-BENCH_RESULT_FILE_PATH	= ./tmp/evaluation/result_20241125-000000.json
+INPUT_DIR_PATH			= ./tmp/evaluation/20241125-threshold/input
+BENCH_RESULT_FILE_PATH	= ./tmp/evaluation/result_20241125-threshold.json
 # output
-OUTPUT_DIR_SIMPLE_CT	= ./tmp/evaluation/20241125-000000/output/simple/calculation-time
-OUTPUT_DIR_SIMPLE_MU	= ./tmp/evaluation/20241125-000000/output/simple/memory-usage
-OUTPUT_DIR_GNN_CT		= ./tmp/evaluation/20241125-000000/output/gnn/calculation-time
-OUTPUT_DIR_GNN_MU		= ./tmp/evaluation/20241125-000000/output/gnn/memory-usage
+OUTPUT_DIR_SIMPLE_CT	= ./tmp/evaluation/20241125-threshold/output/simple/calculation-time
+OUTPUT_DIR_SIMPLE_MU	= ./tmp/evaluation/20241125-threshold/output/simple/memory-usage
+OUTPUT_DIR_GNN_CT		= ./tmp/evaluation/20241125-threshold/output/gnn/calculation-time
+OUTPUT_DIR_GNN_MU		= ./tmp/evaluation/20241125-threshold/output/gnn/memory-usage
 # additional
 MAX_EPOCHS				= 10000
 

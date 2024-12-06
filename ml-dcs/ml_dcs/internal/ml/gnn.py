@@ -1,9 +1,8 @@
 import logging
-from typing import List, Tuple
+from typing import List
 
 import torch
 import torch.nn.functional as F
-from sklearn.model_selection import train_test_split
 from torch_geometric.data import Batch, Data
 from torch_geometric.nn import GATConv, global_mean_pool
 
@@ -80,10 +79,17 @@ class GNNDataUtil:
     ALLOWED_TARGET_NAMES: List[str] = ["calculation_time", "memory_usage"]
 
     def __init__(
-        self, mtsa_results: List[MTSAResult], target_name: str, threshold: float = None
+        self,
+        training_mtsa_results: List[MTSAResult],
+        validation_mtsa_results: List[MTSAResult],
+        testing_mtsa_results: List[MTSAResult],
+        target_name: str,
+        threshold: float = None,
     ):
         # args
-        self.mtsa_results = mtsa_results
+        self.training_mtsa_results = training_mtsa_results
+        self.validation_mtsa_results = validation_mtsa_results
+        self.testing_mtsa_results = testing_mtsa_results
         if target_name in self.ALLOWED_TARGET_NAMES:
             self.target_name = target_name
         else:
@@ -91,17 +97,20 @@ class GNNDataUtil:
         self.threshold = threshold
         # additional
         if self.threshold is not None:
-            self.mtsa_results = self._exclude_by_threshold()
-        (
-            self.training_mtsa_results,
-            self.validation_mtsa_results,
-            self.testing_mtsa_results,
-        ) = self._split_mtsa_results(self.mtsa_results)
+            self.training_mtsa_results = self._exclude_by_threshold(
+                self.training_mtsa_results
+            )
+            self.validation_mtsa_results = self._exclude_by_threshold(
+                self.validation_mtsa_results
+            )
+            self.testing_mtsa_results = self._exclude_by_threshold(
+                self.testing_mtsa_results
+            )
         self.preprocessor = LTSStructurePreprocessor()
 
-    def _exclude_by_threshold(self) -> List[MTSAResult]:
+    def _exclude_by_threshold(self, results: List[MTSAResult]) -> List[MTSAResult]:
         updated = []
-        for result in self.mtsa_results:
+        for result in results:
             match self.target_name:
                 case "calculation_time":
                     if result.duration_ms > self.threshold:
@@ -113,17 +122,6 @@ class GNNDataUtil:
                     raise ValueError(f"Target name {self.target_name} not allowed")
             updated.append(result)
         return updated
-
-    def _split_mtsa_results(
-        self, mtsa_results: List[MTSAResult]
-    ) -> Tuple[List[MTSAResult], List[MTSAResult], List[MTSAResult]]:
-        training_results, tmp = train_test_split(
-            mtsa_results, test_size=0.3, random_state=DEFAULT_RANDOM_STATE
-        )
-        validation_results, testing_results = train_test_split(
-            tmp, test_size=0.5, random_state=DEFAULT_RANDOM_STATE
-        )
-        return training_results, validation_results, testing_results
 
     def get_lts_graph(
         self,
