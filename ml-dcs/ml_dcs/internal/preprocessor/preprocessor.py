@@ -188,7 +188,7 @@ class LTSStructurePreprocessor:
                 state_number = index
 
             node_feature = NodeFeature(
-                input_model_type=0 if is_environment else 1,
+                input_model_type=1 if is_environment else -1,
                 input_model_number=model_number,
                 state_number=state_number,
                 is_not_error_state=is_not_error_state,

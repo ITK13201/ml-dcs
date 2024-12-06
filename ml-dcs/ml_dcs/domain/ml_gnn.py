@@ -213,7 +213,7 @@ class GNNTestingResult(BaseModel):
 # Preprocessing
 # ===
 class NodeFeature(BaseModel):
-    input_model_type: Literal[0, 1]
+    input_model_type: Literal[-1, 1]
     input_model_number: float
     state_number: float
     is_not_error_state: Literal[-1, 1]

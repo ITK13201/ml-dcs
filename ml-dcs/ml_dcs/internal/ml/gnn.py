@@ -13,27 +13,28 @@ from ml_dcs.internal.preprocessor.preprocessor import LTSStructurePreprocessor
 
 logger = logging.getLogger(__name__)
 
-LTS_EMBEDDING_SIZE = 32
+LTS_EMBEDDING_SIZE = 64
 DEFAULT_RANDOM_STATE = 42
 
 
 class LTSGNN(torch.nn.Module):
     INPUT_CHANNELS = 5
-    HIDDEN_CHANNELS = 64
+    HIDDEN_CHANNELS = 128
     OUTPUT_CHANNELS = LTS_EMBEDDING_SIZE
     EDGE_DIMENSION = 3
 
     def __init__(self):
         super(LTSGNN, self).__init__()
         self.conv1 = GATConv(
-            self.INPUT_CHANNELS, self.HIDDEN_CHANNELS, edge_dim=self.EDGE_DIMENSION
+            self.INPUT_CHANNELS,
+            self.HIDDEN_CHANNELS,
+            edge_dim=self.EDGE_DIMENSION,
         ).to(DEVICE)
-        self.conv2 = GATConv(self.HIDDEN_CHANNELS, self.HIDDEN_CHANNELS, edge_dim=1).to(
-            DEVICE
-        )
-        self.conv3 = GATConv(self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS, edge_dim=1).to(
-            DEVICE
-        )
+        self.conv2 = GATConv(
+            self.HIDDEN_CHANNELS,
+            self.OUTPUT_CHANNELS,
+            edge_dim=self.EDGE_DIMENSION,
+        ).to(DEVICE)
 
     def forward(self, data: Data):
         x, edge_index, edge_attr, batch = (
@@ -44,24 +45,20 @@ class LTSGNN(torch.nn.Module):
         )
 
         # 1st graph convolution
-        x, (edge_index, edge_attr) = self.conv1(
+        x = self.conv1(
             x=x,
             edge_index=edge_index,
             edge_attr=edge_attr,
-            return_attention_weights=True,
         )
         x = F.relu(x)
 
         # 2nd graph convolution
-        x, (edge_index, edge_attr) = self.conv2(
+        x = self.conv2(
             x=x,
             edge_index=edge_index,
             edge_attr=edge_attr,
-            return_attention_weights=True,
         )
         x = F.relu(x)
-
-        x = self.conv3(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
         # pooling
         x = global_mean_pool(x, batch)
@@ -70,7 +67,7 @@ class LTSGNN(torch.nn.Module):
 
 class LTSRegressionModel(torch.nn.Module):
     INPUT_CHANNELS = LTS_EMBEDDING_SIZE
-    HIDDEN_CHANNELS = 16
+    HIDDEN_CHANNELS = 32
     OUTPUT_CHANNELS = 1
 
     def __init__(self):
@@ -93,6 +90,7 @@ class LTSRegressionModel(torch.nn.Module):
         x = F.relu(x)
 
         x = self.fc3(x)
+
         return x
 
 
