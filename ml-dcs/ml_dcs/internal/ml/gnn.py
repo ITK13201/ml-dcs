@@ -13,13 +13,13 @@ from ml_dcs.internal.preprocessor.preprocessor import LTSStructurePreprocessor
 
 logger = logging.getLogger(__name__)
 
-LTS_EMBEDDING_SIZE = 64
+LTS_EMBEDDING_SIZE = 32
 DEFAULT_RANDOM_STATE = 42
 
 
 class LTSGNN(torch.nn.Module):
     INPUT_CHANNELS = 5
-    HIDDEN_CHANNELS = 128
+    HIDDEN_CHANNELS = 64
     OUTPUT_CHANNELS = LTS_EMBEDDING_SIZE
     EDGE_DIMENSION = 3
 
@@ -28,9 +28,12 @@ class LTSGNN(torch.nn.Module):
         self.conv1 = GATConv(
             self.INPUT_CHANNELS, self.HIDDEN_CHANNELS, edge_dim=self.EDGE_DIMENSION
         ).to(DEVICE)
-        self.conv2 = GATConv(
-            self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS, edge_dim=self.EDGE_DIMENSION
-        ).to(DEVICE)
+        self.conv2 = GATConv(self.HIDDEN_CHANNELS, self.HIDDEN_CHANNELS, edge_dim=1).to(
+            DEVICE
+        )
+        self.conv3 = GATConv(self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS, edge_dim=1).to(
+            DEVICE
+        )
 
     def forward(self, data: Data):
         x, edge_index, edge_attr, batch = (
@@ -41,12 +44,24 @@ class LTSGNN(torch.nn.Module):
         )
 
         # 1st graph convolution
-        x = self.conv1(x=x, edge_index=edge_index, edge_attr=edge_attr)
-
+        x, (edge_index, edge_attr) = self.conv1(
+            x=x,
+            edge_index=edge_index,
+            edge_attr=edge_attr,
+            return_attention_weights=True,
+        )
         x = F.relu(x)
 
         # 2nd graph convolution
-        x = self.conv2(x=x, edge_index=edge_index, edge_attr=edge_attr)
+        x, (edge_index, edge_attr) = self.conv2(
+            x=x,
+            edge_index=edge_index,
+            edge_attr=edge_attr,
+            return_attention_weights=True,
+        )
+        x = F.relu(x)
+
+        x = self.conv3(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
         # pooling
         x = global_mean_pool(x, batch)
@@ -55,13 +70,16 @@ class LTSGNN(torch.nn.Module):
 
 class LTSRegressionModel(torch.nn.Module):
     INPUT_CHANNELS = LTS_EMBEDDING_SIZE
-    HIDDEN_CHANNELS = 32
+    HIDDEN_CHANNELS = 16
     OUTPUT_CHANNELS = 1
 
     def __init__(self):
         super(LTSRegressionModel, self).__init__()
         self.fc1 = torch.nn.Linear(self.INPUT_CHANNELS, self.HIDDEN_CHANNELS).to(DEVICE)
-        self.fc2 = torch.nn.Linear(self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS).to(
+        self.fc2 = torch.nn.Linear(self.HIDDEN_CHANNELS, self.HIDDEN_CHANNELS).to(
+            DEVICE
+        )
+        self.fc3 = torch.nn.Linear(self.HIDDEN_CHANNELS, self.OUTPUT_CHANNELS).to(
             DEVICE
         )
 
@@ -72,6 +90,9 @@ class LTSRegressionModel(torch.nn.Module):
 
         # 2nd regression
         x = self.fc2(x)
+        x = F.relu(x)
+
+        x = self.fc3(x)
         return x
 
 

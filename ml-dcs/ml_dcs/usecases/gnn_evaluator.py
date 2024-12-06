@@ -30,7 +30,7 @@ class EarlyStopping:
         self,
         lts_gnn_model_output_file_path: str,
         regression_model_output_file_path: str,
-        patience=20,
+        patience=10,
         verbose=False,
     ):
         # === args ===

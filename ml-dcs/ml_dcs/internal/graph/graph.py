@@ -65,7 +65,7 @@ class GraphUtil:
 class Graph2Util:
     def __init__(self, graph: Graph2):
         self.graph = graph
-        self.early_stopping_threshold = 20
+        self.early_stopping_threshold = 10
 
     def _configure(self):
         plt.xlabel(self.graph.x_label)
