@@ -158,11 +158,11 @@ class LTSStructurePreprocessor:
                 actions.add(action_name)
 
         actions_dict = {action_name: index for index, action_name in enumerate(actions)}
-        action_scaler = MinMaxScaler(0, len(actions_dict) - 1)
-        actions_dict = {
-            action_name: action_scaler.scale(action_number)
-            for action_name, action_number in actions_dict.items()
-        }
+        # action_scaler = MinMaxScaler(0, len(actions_dict) - 1)
+        # actions_dict = {
+        #     action_name: action_scaler.scale(action_number)
+        #     for action_name, action_number in actions_dict.items()
+        # }
         return actions_dict
 
     def _get_model_feature(

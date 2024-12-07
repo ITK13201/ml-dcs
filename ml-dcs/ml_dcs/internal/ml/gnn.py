@@ -13,13 +13,13 @@ from ml_dcs.internal.preprocessor.preprocessor import LTSStructurePreprocessor
 
 logger = logging.getLogger(__name__)
 
-LTS_EMBEDDING_SIZE = 64
+LTS_EMBEDDING_SIZE = 32
 DEFAULT_RANDOM_STATE = 42
 
 
 class LTSGNN(torch.nn.Module):
     INPUT_CHANNELS = 5
-    HIDDEN_CHANNELS = 128
+    HIDDEN_CHANNELS = 64
     OUTPUT_CHANNELS = LTS_EMBEDDING_SIZE
     EDGE_DIMENSION = 3
 
@@ -31,6 +31,11 @@ class LTSGNN(torch.nn.Module):
             edge_dim=self.EDGE_DIMENSION,
         ).to(DEVICE)
         self.conv2 = GATConv(
+            self.HIDDEN_CHANNELS,
+            self.HIDDEN_CHANNELS,
+            edge_dim=self.EDGE_DIMENSION,
+        ).to(DEVICE)
+        self.conv3 = GATConv(
             self.HIDDEN_CHANNELS,
             self.OUTPUT_CHANNELS,
             edge_dim=self.EDGE_DIMENSION,
@@ -60,6 +65,12 @@ class LTSGNN(torch.nn.Module):
         )
         x = F.relu(x)
 
+        x = self.conv3(
+            x=x,
+            edge_index=edge_index,
+            edge_attr=edge_attr,
+        )
+
         # pooling
         x = global_mean_pool(x, batch)
         return x
@@ -67,7 +78,7 @@ class LTSGNN(torch.nn.Module):
 
 class LTSRegressionModel(torch.nn.Module):
     INPUT_CHANNELS = LTS_EMBEDDING_SIZE
-    HIDDEN_CHANNELS = 32
+    HIDDEN_CHANNELS = 16
     OUTPUT_CHANNELS = 1
 
     def __init__(self):
