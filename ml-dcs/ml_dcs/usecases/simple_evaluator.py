@@ -22,8 +22,11 @@ from ml_dcs.internal.mtsa.data_utils import MTSADataUtil
 logger = getLogger(__name__)
 
 
+DEFAULT_RANDOM_STATE = 42
+
 class MLSimpleEvaluator:
-    RANDOM_STATES = [i for i in range(0, 3000, 10)]
+    # RANDOM_STATES = [i for i in range(0, 3000, 1)]
+    RANDOM_STATES = [DEFAULT_RANDOM_STATE]
 
     def __init__(
         self,
