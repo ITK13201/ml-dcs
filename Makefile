@@ -40,6 +40,7 @@ exec-gnn-mu:
 exec-prepare-dataset:
 	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py prepare_dataset \
 		--input-dir ./tmp/prepare-dataset/input/20241125-000000 \
-		--output-dir ./tmp/prepare-dataset/output/20241125-threshold \
+		--output-dir ./tmp/prepare-dataset/output/20241125-scenario-CM \
 		--calculation-time-threshold 30 \
-		--memory-usage-threshold 15
+		--memory-usage-threshold 15 \
+		--testing-scenario CM
