@@ -3,14 +3,15 @@ DOCKER_RUN				= docker compose run --rm
 PYTHON_EXEC				= /opt/conda/bin/python
 # === args ===
 # input
-INPUT_DIR_PATH			= ./tmp/evaluation/20241125-threshold/input
-BENCH_RESULT_FILE_PATH	= ./tmp/evaluation/result_20241125-threshold.json
+INPUT_DIR_PATH			= ./tmp/evaluation/20241125-scenario-ArtGallery/input
+BENCH_RESULT_FILE_PATH	= ./tmp/evaluation/result_20241125-scenario-ArtGallery.json
 # output
-OUTPUT_DIR_SIMPLE_CT	= ./tmp/evaluation/20241125-threshold/output/simple/calculation-time
-OUTPUT_DIR_SIMPLE_MU	= ./tmp/evaluation/20241125-threshold/output/simple/memory-usage
-OUTPUT_DIR_GNN_CT		= ./tmp/evaluation/20241125-threshold/output/gnn/calculation-time
-OUTPUT_DIR_GNN_MU		= ./tmp/evaluation/20241125-threshold/output/gnn/memory-usage
+OUTPUT_DIR_SIMPLE_CT	= ./tmp/evaluation/20241125-scenario-ArtGallery/output/simple/calculation-time
+OUTPUT_DIR_SIMPLE_MU	= ./tmp/evaluation/20241125-scenario-ArtGallery/output/simple/memory-usage
+OUTPUT_DIR_GNN_CT		= ./tmp/evaluation/20241125-scenario-ArtGallery/output/gnn/calculation-time
+OUTPUT_DIR_GNN_MU		= ./tmp/evaluation/20241125-scenario-ArtGallery/output/gnn/memory-usage
 # additional
+LAYER_NUM				= 2
 MAX_EPOCHS				= 10000
 
 
@@ -29,12 +30,14 @@ exec-gnn-ct:
 		--input-dir-path $(INPUT_DIR_PATH) \
 		--bench-result-file $(BENCH_RESULT_FILE_PATH) \
 		--output-base-dir-path $(OUTPUT_DIR_GNN_CT) \
+		--layer-num $(LAYER_NUM) \
 		--max-epochs $(MAX_EPOCHS)
 exec-gnn-mu:
 	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py predict_memory_usage gnn \
 		--input-dir-path $(INPUT_DIR_PATH) \
 		--bench-result-file $(BENCH_RESULT_FILE_PATH) \
 		--output-base-dir-path $(OUTPUT_DIR_GNN_MU) \
+		--layer-num $(LAYER_NUM) \
 		--max-epochs $(MAX_EPOCHS)
 
 exec-prepare-dataset:

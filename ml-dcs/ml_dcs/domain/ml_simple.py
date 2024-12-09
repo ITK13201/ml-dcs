@@ -6,7 +6,12 @@ from typing import List
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, computed_field
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+    root_mean_squared_error,
+)
 
 from ml_dcs.domain.mtsa import MTSAResult
 
@@ -218,6 +223,8 @@ class MLSimpleTestingResult(BaseModel):
         super().__init__(*args, **kwargs)
         self._duration = None
         self._mae = None
+        self._mse = None
+        self._rmse = None
         self._r_squared = None
 
     @computed_field
@@ -240,6 +247,22 @@ class MLSimpleTestingResult(BaseModel):
 
     @computed_field
     @property
+    def mse(self) -> float:
+        if self._mse is None:
+            self._mse = mean_squared_error(self.actual_values, self.predicted_values)
+        return self._mse
+
+    @computed_field
+    @property
+    def rmse(self) -> float:
+        if self._rmse is None:
+            self._rmse = root_mean_squared_error(
+                self.actual_values, self.predicted_values
+            )
+        return self._rmse
+
+    @computed_field
+    @property
     def r_squared(self) -> float:
         if self._r_squared is None:
             self._r_squared = r2_score(self.actual_values, self.predicted_values)
@@ -253,6 +276,8 @@ class MLSimpleTestingResultFinal(BaseModel):
     random_state: int
     duration: timedelta
     mae: float
+    mse: float
+    rmse: float
     r_squared: float
 
 

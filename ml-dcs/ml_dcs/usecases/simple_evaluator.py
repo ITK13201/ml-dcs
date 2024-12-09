@@ -24,6 +24,7 @@ logger = getLogger(__name__)
 
 DEFAULT_RANDOM_STATE = 42
 
+
 class MLSimpleEvaluator:
     # RANDOM_STATES = [i for i in range(0, 3000, 1)]
     RANDOM_STATES = [DEFAULT_RANDOM_STATE]

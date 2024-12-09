@@ -23,23 +23,42 @@ class LTSGNN(torch.nn.Module):
     OUTPUT_CHANNELS = LTS_EMBEDDING_SIZE
     EDGE_DIMENSION = 3
 
-    def __init__(self):
-        super(LTSGNN, self).__init__()
-        self.conv1 = GATConv(
-            self.INPUT_CHANNELS,
-            self.HIDDEN_CHANNELS,
-            edge_dim=self.EDGE_DIMENSION,
-        ).to(DEVICE)
-        self.conv2 = GATConv(
-            self.HIDDEN_CHANNELS,
-            self.HIDDEN_CHANNELS,
-            edge_dim=self.EDGE_DIMENSION,
-        ).to(DEVICE)
-        self.conv3 = GATConv(
-            self.HIDDEN_CHANNELS,
-            self.OUTPUT_CHANNELS,
-            edge_dim=self.EDGE_DIMENSION,
-        ).to(DEVICE)
+    def __init__(self, layer_num: int, *args, **kwargs):
+        super(LTSGNN, self).__init__(*args, **kwargs)
+
+        self.layer_num = layer_num
+
+        if self.layer_num == 1:
+            self.conv = GATConv(
+                self.INPUT_CHANNELS,
+                self.OUTPUT_CHANNELS,
+                edge_dim=self.EDGE_DIMENSION,
+            ).to(DEVICE)
+        elif self.layer_num >= 2:
+            self.conv1 = GATConv(
+                self.INPUT_CHANNELS,
+                self.HIDDEN_CHANNELS,
+                edge_dim=self.EDGE_DIMENSION,
+            ).to(DEVICE)
+
+            if self.layer_num >= 3:
+                self.conv2 = GATConv(
+                    self.HIDDEN_CHANNELS,
+                    self.HIDDEN_CHANNELS,
+                    edge_dim=self.EDGE_DIMENSION,
+                ).to(DEVICE)
+                if self.layer_num >= 4:
+                    self.conv3 = GATConv(
+                        self.HIDDEN_CHANNELS,
+                        self.HIDDEN_CHANNELS,
+                        edge_dim=self.EDGE_DIMENSION,
+                    ).to(DEVICE)
+
+            self.conv_last = GATConv(
+                self.HIDDEN_CHANNELS,
+                self.OUTPUT_CHANNELS,
+                edge_dim=self.EDGE_DIMENSION,
+            ).to(DEVICE)
 
     def forward(self, data: Data):
         x, edge_index, edge_attr, batch = (
@@ -49,27 +68,42 @@ class LTSGNN(torch.nn.Module):
             data.batch,
         )
 
-        # 1st graph convolution
-        x = self.conv1(
-            x=x,
-            edge_index=edge_index,
-            edge_attr=edge_attr,
-        )
-        x = F.relu(x)
+        if self.layer_num == 1:
+            x = self.conv(
+                x=x,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+            )
+        elif self.layer_num >= 2:
+            # first graph convolution
+            x = self.conv1(
+                x=x,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+            )
+            x = F.relu(x)
 
-        # 2nd graph convolution
-        x = self.conv2(
-            x=x,
-            edge_index=edge_index,
-            edge_attr=edge_attr,
-        )
-        x = F.relu(x)
+            if self.layer_num >= 3:
+                x = self.conv2(
+                    x=x,
+                    edge_index=edge_index,
+                    edge_attr=edge_attr,
+                )
+                x = F.relu(x)
+                if self.layer_num >= 4:
+                    x = self.conv3(
+                        x=x,
+                        edge_index=edge_index,
+                        edge_attr=edge_attr,
+                    )
+                    x = F.relu(x)
 
-        x = self.conv3(
-            x=x,
-            edge_index=edge_index,
-            edge_attr=edge_attr,
-        )
+            # last graph convolution
+            x = self.conv_last(
+                x=x,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+            )
 
         # pooling
         x = global_mean_pool(x, batch)

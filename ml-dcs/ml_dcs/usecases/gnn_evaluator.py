@@ -98,6 +98,7 @@ class GNNEvaluator:
         lts_gnn_model_output_file_path: str,
         regression_model_output_file_path: str,
         max_epochs: int,
+        layer_num: int,
         target_name: str,
         threshold: float = None,
     ):
@@ -107,6 +108,7 @@ class GNNEvaluator:
         self.testing_result_output_file_path = testing_result_output_file_path
         self.lts_gnn_model_output_file_path = lts_gnn_model_output_file_path
         self.regression_model_output_file_path = regression_model_output_file_path
+        self.layer_num = layer_num
         self.max_epochs = max_epochs
         if target_name in self.ALLOWED_TARGET_NAMES:
             self.target_name = target_name
@@ -115,7 +117,7 @@ class GNNEvaluator:
         self.threshold = threshold
 
         # basic parameters
-        self.lts_gnn_model = LTSGNN().to(DEVICE)
+        self.lts_gnn_model = LTSGNN(layer_num=self.layer_num).to(DEVICE)
         self.regression_model = LTSRegressionModel().to(DEVICE)
         self.optimizer = torch.optim.Adam(
             list(self.lts_gnn_model.parameters())
@@ -160,7 +162,10 @@ class GNNEvaluator:
                     else:
                         logger.info("testing result: %s", task_result.model_dump_json())
 
-        result = GNNTestingResult(task_results=task_results)
+        result = GNNTestingResult(
+            task_results=task_results,
+            layer_num=self.layer_num,
+        )
         if verbose:
             if is_validation:
                 logger.info("[+] validation_loss_avg: {}".format(result.loss_avg))
@@ -274,6 +279,7 @@ class GNNEvaluator:
         finished_at = datetime.datetime.now()
         result = GNNTrainingResult(
             epoch_results=epoch_results,
+            layer_num=self.layer_num,
             started_at=started_at,
             finished_at=finished_at,
         )

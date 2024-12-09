@@ -113,9 +113,14 @@ class PrepareDatasetCommand(BaseCommand):
                 tmp, test_size=0.5, random_state=DEFAULT_RANDOM_STATE, shuffle=True
             )
         else:
-            not_testing_dataset, testing_dataset = self._split_dataset_by_scenario(dataset)
+            not_testing_dataset, testing_dataset = self._split_dataset_by_scenario(
+                dataset
+            )
             training_dataset, validation_dataset = train_test_split(
-                not_testing_dataset, test_size=0.2, random_state=DEFAULT_RANDOM_STATE, shuffle=True
+                not_testing_dataset,
+                test_size=0.2,
+                random_state=DEFAULT_RANDOM_STATE,
+                shuffle=True,
             )
 
         logger.info("dumping datasets...")
@@ -152,7 +157,9 @@ class PrepareDatasetCommand(BaseCommand):
             updated.append(obj)
         return updated
 
-    def _split_dataset_by_scenario(self, dataset: List[File]) -> (List[File], List[File]):
+    def _split_dataset_by_scenario(
+        self, dataset: List[File]
+    ) -> (List[File], List[File]):
         if not self.testing_scenario:
             raise ValueError("No testing scenario specified")
         not_testing_dataset = []
@@ -163,7 +170,6 @@ class PrepareDatasetCommand(BaseCommand):
             else:
                 not_testing_dataset.append(obj)
         return not_testing_dataset, testing_dataset
-
 
     def _dump_dataset(self, dir: str, files: List[File]):
         for file in files:

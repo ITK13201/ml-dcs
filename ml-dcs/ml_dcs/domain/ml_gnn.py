@@ -3,7 +3,12 @@ from datetime import datetime, timedelta
 from typing import List, Literal
 
 from pydantic import BaseModel, ConfigDict, computed_field
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+    root_mean_squared_error,
+)
 from torch import Tensor
 from torch_geometric.data import Batch
 
@@ -49,6 +54,7 @@ class GNNTrainingResultEpoch(BaseModel):
 
 class GNNTrainingResult(BaseModel):
     epoch_results: List[GNNTrainingResultEpoch]
+    layer_num: int
     started_at: datetime
     finished_at: datetime
 
@@ -115,6 +121,7 @@ class GNNTestingResultTask(BaseModel):
 
 class GNNTestingResult(BaseModel):
     task_results: List[GNNTestingResultTask]
+    layer_num: int
 
     model_config = ConfigDict(frozen=True)
 
@@ -130,6 +137,8 @@ class GNNTestingResult(BaseModel):
         # === computed fields ===
         self._loss_avg = None
         self._mae = None
+        self._mse = None
+        self._rmse = None
         self._r_squared = None
         self._duration_avg = None
 
@@ -184,6 +193,22 @@ class GNNTestingResult(BaseModel):
             return self._mae
         else:
             return self._mae
+
+    @computed_field
+    @property
+    def mse(self) -> float:
+        if self._mse is None:
+            self._mse = mean_squared_error(self.actual_values, self.predicted_values)
+        return self._mse
+
+    @computed_field
+    @property
+    def rmse(self) -> float:
+        if self._rmse is None:
+            self._rmse = root_mean_squared_error(
+                self.actual_values, self.predicted_values
+            )
+        return self._rmse
 
     @computed_field
     @property
