@@ -27,6 +27,15 @@ class PredictionAccuracyGraphData(GraphData):
         )
 
     @classmethod
+    def from_ml_simple_class_div1000(
+        cls, data: MLSimpleTestingResultSet
+    ) -> "GraphData":
+        return cls(
+            x=data.result_at_best_accuracy.actual_values_div1000,
+            y=data.result_at_best_accuracy.predicted_values_div1000,
+        )
+
+    @classmethod
     def from_ml_gnn_class(cls, data: GNNTestingResult) -> "GraphData":
         return cls(
             x=data.actual_values,
@@ -34,10 +43,26 @@ class PredictionAccuracyGraphData(GraphData):
         )
 
     @classmethod
+    def from_ml_gnn_class_div1000(cls, data: GNNTestingResult) -> "GraphData":
+        return cls(
+            x=data.actual_values_div1000,
+            y=data.predicted_values_div1000,
+        )
+
+    @classmethod
     def from_evaluation_result_class(cls, data: EvaluationResult) -> "GraphData":
         return cls(
             x=data.actual_values,
             y=data.predicted_values,
+        )
+
+    @classmethod
+    def from_evaluation_result_class_div1000(
+        cls, data: EvaluationResult
+    ) -> "GraphData":
+        return cls(
+            x=data.actual_values_div1000,
+            y=data.predicted_values_div1000,
         )
 
 

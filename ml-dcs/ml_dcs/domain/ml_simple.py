@@ -226,6 +226,8 @@ class MLSimpleTestingResult(BaseModel):
         self._mse = None
         self._rmse = None
         self._r_squared = None
+        self._actual_values_div1000 = None
+        self._predicted_values_div1000 = None
 
     @computed_field
     @property
@@ -269,6 +271,22 @@ class MLSimpleTestingResult(BaseModel):
             return self._r_squared
         else:
             return self._r_squared
+
+    @computed_field
+    @property
+    def actual_values_div1000(self) -> List[float]:
+        if self._actual_values_div1000 is None:
+            self._actual_values_div1000 = [value / 1000 for value in self.actual_values]
+        return self._actual_values_div1000
+
+    @computed_field
+    @property
+    def predicted_values_div1000(self) -> List[float]:
+        if self._predicted_values_div1000 is None:
+            self._predicted_values_div1000 = [
+                value / 1000 for value in self.predicted_values
+            ]
+        return self._predicted_values_div1000
 
 
 class MLSimpleTestingResultFinal(BaseModel):

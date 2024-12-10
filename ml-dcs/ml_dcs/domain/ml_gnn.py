@@ -133,6 +133,8 @@ class GNNTestingResult(BaseModel):
         self._loss_sum = None
         self._actual_values = None
         self._predicted_values = None
+        self._actual_values_div1000 = None
+        self._predicted_values_div1000 = None
 
         # === computed fields ===
         self._loss_avg = None
@@ -175,6 +177,20 @@ class GNNTestingResult(BaseModel):
             return self._predicted_values
         else:
             return self._predicted_values
+
+    @property
+    def actual_values_div1000(self) -> List[float]:
+        if self._actual_values_div1000 is None:
+            self._actual_values_div1000 = [value / 1000 for value in self.actual_values]
+        return self._actual_values_div1000
+
+    @property
+    def predicted_values_div1000(self) -> List[float]:
+        if self._predicted_values_div1000 is None:
+            self._predicted_values_div1000 = [
+                value / 1000 for value in self.predicted_values
+            ]
+        return self._predicted_values_div1000
 
     @computed_field
     @property
