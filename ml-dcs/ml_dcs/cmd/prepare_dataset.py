@@ -1,6 +1,9 @@
 import argparse
 import json
+import math
 import os
+from copy import deepcopy
+from enum import Enum
 from logging import getLogger
 from typing import List
 
@@ -12,6 +15,13 @@ from ml_dcs.domain.mtsa import MTSAResult
 
 logger = getLogger(__name__)
 DEFAULT_RANDOM_STATE = 42
+OUTLIER_RATIO = 0.05
+
+
+class Target(Enum):
+    ALL = "all"
+    CALCULATION_TIME = "calculation-time"
+    MEMORY_USAGE = "memory-usage"
 
 
 class PrepareDatasetCommand(BaseCommand):
@@ -51,6 +61,18 @@ class PrepareDatasetCommand(BaseCommand):
             required=False,
             help="Testing scenario",
         )
+        parser.add_argument(
+            "--exclude-outliers-by-ratio",
+            action="store_true",
+            help="Exclude outliers by ratio",
+            default=False,
+        )
+        parser.add_argument(
+            "--target",
+            type=str,
+            required=True,
+            help="Target variable",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,6 +82,8 @@ class PrepareDatasetCommand(BaseCommand):
         self.calculation_time_threshold_ms = None
         self.memory_usage_threshold_kb = None
         self.testing_scenario = None
+        self.exclude_outliers_by_ratio = None
+        self.target: Target | None = None
         # additional
         self.output_training_dataset_dir = None
         self.output_validation_dataset_dir = None
@@ -82,7 +106,8 @@ class PrepareDatasetCommand(BaseCommand):
             else None
         )
         self.testing_scenario = args.testing_scenario
-
+        self.exclude_outliers_by_ratio = args.exclude_outliers_by_ratio
+        self.target = Target(args.target)
         # output dirs
         self.output_training_dataset_dir: str = os.path.join(
             self.output_dir, "training"
@@ -101,8 +126,11 @@ class PrepareDatasetCommand(BaseCommand):
         logger.info("loading datasets...")
         dataset = self._load_datasets()
 
-        logger.info("excluding by threshold from datasets...")
-        dataset = self._exclude_by_threshold(dataset)
+        logger.info("excluding outliers from datasets...")
+        if self.exclude_outliers_by_ratio:
+            dataset = self._exclude_outliers(dataset)
+        else:
+            dataset = self._exclude_by_threshold(dataset)
 
         logger.info("preparing dataset...")
         if not self.testing_scenario:
@@ -156,6 +184,18 @@ class PrepareDatasetCommand(BaseCommand):
                     continue
             updated.append(obj)
         return updated
+
+    def _exclude_outliers(self, dataset: List[File]) -> List[File]:
+        updated_dataset = deepcopy(dataset)
+        if self.target == Target.CALCULATION_TIME:
+            updated_dataset.sort(key=lambda x: x.model.duration_ms)
+        elif self.target == Target.MEMORY_USAGE:
+            updated_dataset.sort(key=lambda x: x.model.max_memory_usage_kb)
+
+        length = len(updated_dataset)
+        outlier_length = math.floor(length * OUTLIER_RATIO)
+
+        return updated_dataset[:-outlier_length]
 
     def _split_dataset_by_scenario(
         self, dataset: List[File]
