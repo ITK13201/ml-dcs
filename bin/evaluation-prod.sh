@@ -65,7 +65,7 @@ function exec_gnn_mu () {
     --bench-result-file ${BENCH_RESULT_FILE_PATH} \
     --output-base-dir-path "$2" \
     --layer-num "$3" \
-    --max-epochs "${MAX_EPOCHS}"å
+    --max-epochs "${MAX_EPOCHS}"
 }
 
 
