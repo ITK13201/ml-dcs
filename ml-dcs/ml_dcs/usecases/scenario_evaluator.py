@@ -26,6 +26,7 @@ class SimpleScenarioEvaluator:
 
         updated_actual_values = []
         updated_predicted_values = []
+        lts_names = []
         best_result = self.simple_testing_result_set.result_at_best_accuracy
         for index, lts_name in enumerate(best_result.lts_names):
             # exclude
@@ -38,11 +39,14 @@ class SimpleScenarioEvaluator:
             # include
             actual_value = best_result.actual_values[index]
             predicted_value = best_result.predicted_values[index]
+            lts_name = best_result.lts_names[index]
             updated_actual_values.append(actual_value)
             updated_predicted_values.append(predicted_value)
+            lts_names.append(lts_name)
         updated_simple_result = EvaluationResult(
             actual_values=updated_actual_values,
             predicted_values=updated_predicted_values,
+            lts_names=lts_names,
         )
 
         logger.info(
@@ -74,6 +78,7 @@ class GNNScenarioEvaluator:
 
         updated_actual_values = []
         updated_predicted_values = []
+        lts_names = []
         for task_result in self.gnn_testing_result.task_results:
             # exclude
             if not task_result.lts_name.startswith(scenario):
@@ -84,9 +89,11 @@ class GNNScenarioEvaluator:
             # include
             updated_actual_values.append(task_result.actual)
             updated_predicted_values.append(task_result.predicted)
+            lts_names.append(task_result.lts_name)
         updated_gnn_result = EvaluationResult(
             actual_values=updated_actual_values,
             predicted_values=updated_predicted_values,
+            lts_names=lts_names,
         )
 
         logger.info(

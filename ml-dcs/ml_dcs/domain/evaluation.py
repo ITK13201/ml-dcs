@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List
 
+import pandas as pd
 from pydantic import BaseModel, computed_field
 from sklearn.metrics import (
     mean_absolute_error,
@@ -18,6 +19,7 @@ class EvaluationTarget(Enum):
 class EvaluationResult(BaseModel):
     actual_values: List[float]
     predicted_values: List[float]
+    lts_names: List[str]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,3 +77,27 @@ class EvaluationResult(BaseModel):
         if self._r_squared is None:
             self._r_squared = r2_score(self.actual_values, self.predicted_values)
         return self._r_squared
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        df = pd.DataFrame(
+            {
+                "lts": self.lts_names,
+                "actual_values": self.actual_values,
+                "predicted_values": self.predicted_values,
+            }
+        )
+        df = df.sort_values(by="actual_values", ascending=True)
+        return df
+
+    @property
+    def dataframe_div1000(self) -> pd.DataFrame:
+        df = pd.DataFrame(
+            {
+                "lts": self.lts_names,
+                "actual_values": self.actual_values_div1000,
+                "predicted_values": self.predicted_values_div1000,
+            }
+        )
+        df = df.sort_values(by="actual_values", ascending=True)
+        return df
