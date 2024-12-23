@@ -83,14 +83,16 @@ class LearningCurveGraphData(GraphData2):
         return cls(x=x, y1=y1, y2=y2)
 
     @classmethod
-    def from_ml_gnn_training_result_class_div1000(cls, data: GNNTrainingResult) -> "GraphData2":
+    def from_ml_gnn_training_result_class_div1000(
+        cls, data: GNNTrainingResult
+    ) -> "GraphData2":
         x = []
         y1 = []
         y2 = []
         for index, epoch_result in enumerate(data.epoch_results):
             epoch = index + 1
-            train_loss = epoch_result.training_loss_avg / (1000 ** 2)
-            val_loss = epoch_result.validation_loss_avg / (1000 ** 2)
+            train_loss = epoch_result.training_loss_avg / (1000**2)
+            val_loss = epoch_result.validation_loss_avg / (1000**2)
             x.append(epoch)
             y1.append(train_loss)
             y2.append(val_loss)

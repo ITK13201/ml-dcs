@@ -10,6 +10,9 @@ from sklearn.metrics import (
     root_mean_squared_error,
 )
 
+from ml_dcs.domain.ml_gnn import GNNTestingResult
+from ml_dcs.domain.ml_simple import MLSimpleTestingResultSet
+
 
 class EvaluationTarget(Enum):
     CALCULATION_TIME = "Calculation Time"
@@ -29,6 +32,22 @@ class EvaluationResult(BaseModel):
         self._mse = None
         self._rmse = None
         self._r_squared = None
+
+    @classmethod
+    def from_simple_class(cls, result: MLSimpleTestingResultSet):
+        return cls(
+            actual_values=result.result_at_best_accuracy.actual_values,
+            predicted_values=result.result_at_best_accuracy.predicted_values,
+            lts_names=result.result_at_best_accuracy.lts_names,
+        )
+
+    @classmethod
+    def from_gnn_class(cls, result: GNNTestingResult):
+        return cls(
+            actual_values=result.actual_values,
+            predicted_values=result.predicted_values,
+            lts_names=result.lts_names,
+        )
 
     @computed_field
     @property

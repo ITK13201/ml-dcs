@@ -131,6 +131,7 @@ class GNNTestingResult(BaseModel):
         # === properties ===
         self._task_results_length = None
         self._loss_sum = None
+        self._lts_names = None
         self._actual_values = None
         self._predicted_values = None
         self._actual_values_div1000 = None
@@ -161,6 +162,14 @@ class GNNTestingResult(BaseModel):
             return self._loss_sum
         else:
             return self._loss_sum
+
+    @property
+    def lts_names(self) -> List[str]:
+        if self._lts_names is None:
+            self._lts_names = [task.lts_name for task in self.task_results]
+            return self._lts_names
+        else:
+            return self._lts_names
 
     @property
     def actual_values(self) -> List[float]:
