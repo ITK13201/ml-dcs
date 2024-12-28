@@ -21,7 +21,7 @@ class MTSAResultInitialModelsEnvironment(BaseModel):
     number_of_transitions: int
     number_of_controllable_actions: int
     number_of_uncontrollable_actions: int
-    structure: List[List[str]]
+    structure: List[List[str]] | None = None
 
     model_config = ConfigDict(alias_generator=to_camel)
 
@@ -35,7 +35,7 @@ class MTSAResultInitialModelsRequirement(BaseModel):
     number_of_transitions: int
     number_of_controllable_actions: int
     number_of_uncontrollable_actions: int
-    structure: List[List[str]]
+    structure: List[List[str]] | None = None
 
     model_config = ConfigDict(alias_generator=to_camel)
 
@@ -98,12 +98,41 @@ class MTSAResultComposeStepCreatingGameSpace(BaseModel):
     )
     source_models: List[str] = Field(default_factory=list)
 
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration: timedelta | None = Field(alias="duration [ms]", default=None)
+    max_memory_usage: ByteSize | None = Field(alias="maxMemoryUsage [KB]", default=None)
+
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
     @field_validator("compose_duration", mode="before", check_fields=True)
     @classmethod
     def validate_compose_duration(cls, v: int) -> timedelta:
         return timedelta(milliseconds=float(v))
+
+    @field_validator("duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
+
+    @field_validator("max_memory_usage", mode="before", check_fields=True)
+    @classmethod
+    def validate_max_memory_usage(cls, v: int) -> ByteSize:
+        kb = 10**3
+        return ByteSize(v * kb)
+
+    @property
+    def duration_ms(self) -> float:
+        return self.duration / timedelta(milliseconds=1)
+
+    @property
+    def duration_iso(self) -> str:
+        adapter = TypeAdapter(timedelta)
+        return adapter.dump_python(self.duration, mode="json")
+
+    @property
+    def max_memory_usage_kb(self) -> float:
+        return self.max_memory_usage.to("KB")
 
 
 class MTSAResultComposeStepSolvingProblem(BaseModel):
@@ -120,6 +149,11 @@ class MTSAResultComposeStepSolvingProblem(BaseModel):
     )
     source_models: List[str] = Field(default_factory=list)
 
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration: timedelta | None = Field(alias="duration [ms]", default=None)
+    max_memory_usage: ByteSize | None = Field(alias="maxMemoryUsage [KB]", default=None)
+
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
     def __init__(self, *args, **kwargs):
@@ -135,6 +169,30 @@ class MTSAResultComposeStepSolvingProblem(BaseModel):
     @classmethod
     def validate_solving_duration(cls, v: int) -> timedelta:
         return timedelta(milliseconds=float(v))
+
+    @field_validator("duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
+
+    @field_validator("max_memory_usage", mode="before", check_fields=True)
+    @classmethod
+    def validate_max_memory_usage(cls, v: int) -> ByteSize:
+        kb = 10**3
+        return ByteSize(v * kb)
+
+    @property
+    def duration_ms(self) -> float:
+        return self.duration / timedelta(milliseconds=1)
+
+    @property
+    def duration_iso(self) -> str:
+        adapter = TypeAdapter(timedelta)
+        return adapter.dump_python(self.duration, mode="json")
+
+    @property
+    def max_memory_usage_kb(self) -> float:
+        return self.max_memory_usage.to("KB")
 
     @property
     def total_duration(self) -> timedelta:
@@ -274,6 +332,11 @@ class MTSAResultCompileStep(BaseModel):
     requirements: List[MTSAResultCompileStepRequirement] = Field(default_factory=list)
     final_models: List[MTSAResultCompileStepFinalModel] = Field(default_factory=list)
 
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration: timedelta | None = Field(alias="duration [ms]", default=None)
+    max_memory_usage: ByteSize | None = Field(alias="maxMemoryUsage [KB]", default=None)
+
     model_config = ConfigDict(frozen=True, alias_generator=to_camel)
 
     def __init__(self, *args, **kwargs):
@@ -287,6 +350,30 @@ class MTSAResultCompileStep(BaseModel):
         self._total_number_of_uncontrollable_actions = None
         self._ratio_of_controllable_actions = None
         self._number_of_models = None
+
+    @field_validator("duration", mode="before", check_fields=True)
+    @classmethod
+    def validate_duration(cls, v: int) -> timedelta:
+        return timedelta(milliseconds=float(v))
+
+    @field_validator("max_memory_usage", mode="before", check_fields=True)
+    @classmethod
+    def validate_max_memory_usage(cls, v: int) -> ByteSize:
+        kb = 10**3
+        return ByteSize(v * kb)
+
+    @property
+    def duration_ms(self) -> float:
+        return self.duration / timedelta(milliseconds=1)
+
+    @property
+    def duration_iso(self) -> str:
+        adapter = TypeAdapter(timedelta)
+        return adapter.dump_python(self.duration, mode="json")
+
+    @property
+    def max_memory_usage_kb(self) -> float:
+        return self.max_memory_usage.to("KB")
 
     @property
     def total_compose_duration_of_environments(self) -> timedelta:
@@ -415,6 +502,7 @@ class MTSAResult(BaseModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._significant_duration = None
+        self._significant_max_memory_usage = None
 
     @field_validator("duration", mode="before", check_fields=True)
     @classmethod
@@ -444,7 +532,9 @@ class MTSAResult(BaseModel):
     def significant_duration(self):
         if self._significant_duration is None:
             self._significant_duration = (
-                self.compile_step.total_duration + self.compose_step.total_duration
+                self.compile_step.duration
+                + self.compose_step.creatingGameSpace.duration
+                + self.compose_step.solvingProblem.duration
             )
         return self._significant_duration
 
@@ -452,5 +542,16 @@ class MTSAResult(BaseModel):
     def significant_duration_ms(self) -> float:
         return self.significant_duration / timedelta(milliseconds=1)
 
-    def initialize_quantified_structures(self):
-        self.initial_models.initialize_quantified_structures()
+    @property
+    def significant_max_memory_usage(self) -> ByteSize:
+        if self._significant_max_memory_usage is None:
+            self._significant_max_memory_usage = max(
+                self.compile_step.max_memory_usage,
+                self.compose_step.creatingGameSpace.max_memory_usage,
+                self.compose_step.solvingProblem.max_memory_usage,
+            )
+        return self._significant_max_memory_usage
+
+    @property
+    def significant_max_memory_usage_kb(self) -> float:
+        return self.significant_max_memory_usage.to("KB")
