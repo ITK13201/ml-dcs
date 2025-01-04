@@ -47,3 +47,9 @@ exec-prepare-dataset:
 		--exclude-outliers-by-ratio \
 		--target memory-usage \
 		--testing-scenario CM
+
+exec-get-lts:
+	$(DOCKER_EXEC) $(PYTHON_EXEC) main.py get_specific_lts_files \
+		--lts-input-dir ./tmp/get_specific_lts_files/lts_files \
+		--result-input-dir ./tmp/get_specific_lts_files/result_files \
+		--output ./tmp/get_specific_lts_files/output

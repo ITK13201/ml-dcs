@@ -3,6 +3,7 @@ from typing import Type
 
 from ml_dcs.cmd.base import BaseCommand
 from ml_dcs.cmd.check_gpu import CheckGPUCommand
+from ml_dcs.cmd.get_specific_lts_files import GetSpecificLTSFilesCommand
 from ml_dcs.cmd.predict_calculation_time.gnn import PredictCalculationTimeGNNCommand
 from ml_dcs.cmd.predict_calculation_time.root import PredictCalculationTimeCommand
 from ml_dcs.cmd.predict_calculation_time.simple import (
@@ -56,6 +57,7 @@ class RootCommand:
         )
         self.add_command(CheckGPUCommand)
         self.add_command(PrepareDatasetCommand)
+        self.add_command(GetSpecificLTSFilesCommand)
 
     def execute(self):
         args = self.parser.parse_args()
