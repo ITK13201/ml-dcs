@@ -1,6 +1,5 @@
 [tool.black]
 line-length = 88
-include = '\.pyi?$'
 exclude = '''
 /(
     \.git
@@ -13,6 +12,7 @@ exclude = '''
   | dist
   | migrations
   | vendor
+  | 243_.*
 )/
 '''
 
@@ -29,5 +29,6 @@ skip = [
     "build",
     "dist",
     "migrations",
-    "vendor"
+    "vendor",
+    "243_*",
 ]

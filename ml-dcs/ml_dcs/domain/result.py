@@ -70,7 +70,9 @@ class UnknownScenarioResult(BaseModel):
         self.list_mae.append(data_model.result_at_best_accuracy.mae / 1000)
         self.list_rmse.append(data_model.result_at_best_accuracy.rmse / 1000)
         self.list_mape.append(data_model.result_at_best_accuracy.mape)
-        self.list_t_pred.append(data_model.result_at_best_accuracy.duration.total_seconds() * 1000)
+        self.list_t_pred.append(
+            data_model.result_at_best_accuracy.duration.total_seconds() * 1000
+        )
 
     def update_with_gnn(self, input_path: str):
         with open(input_path, "r") as f:
