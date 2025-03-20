@@ -8,6 +8,7 @@ import pandas as pd
 from pydantic import BaseModel, computed_field
 from sklearn.metrics import (
     mean_absolute_error,
+    mean_absolute_percentage_error,
     mean_squared_error,
     r2_score,
     root_mean_squared_error,
@@ -225,6 +226,7 @@ class MLSimpleTestingResult(BaseModel):
         self._mae = None
         self._mse = None
         self._rmse = None
+        self._mape = None
         self._r_squared = None
         self._actual_values_div1000 = None
         self._predicted_values_div1000 = None
@@ -262,6 +264,15 @@ class MLSimpleTestingResult(BaseModel):
                 self.actual_values, self.predicted_values
             )
         return self._rmse
+
+    @computed_field
+    @property
+    def mape(self) -> float:
+        if self._mape is None:
+            self._mape = mean_absolute_percentage_error(
+                self.actual_values, self.predicted_values
+            )
+        return self._mape
 
     @computed_field
     @property

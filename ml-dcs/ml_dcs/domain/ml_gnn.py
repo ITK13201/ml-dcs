@@ -5,6 +5,7 @@ from typing import List, Literal
 from pydantic import BaseModel, ConfigDict, computed_field
 from sklearn.metrics import (
     mean_absolute_error,
+    mean_absolute_percentage_error,
     mean_squared_error,
     r2_score,
     root_mean_squared_error,
@@ -142,6 +143,7 @@ class GNNTestingResult(BaseModel):
         self._mae = None
         self._mse = None
         self._rmse = None
+        self._mape = None
         self._r_squared = None
         self._duration_avg = None
 
@@ -234,6 +236,15 @@ class GNNTestingResult(BaseModel):
                 self.actual_values, self.predicted_values
             )
         return self._rmse
+
+    @computed_field
+    @property
+    def mape(self) -> float:
+        if self._mape is None:
+            self._mape = mean_absolute_percentage_error(
+                self.actual_values, self.predicted_values
+            )
+        return self._mape
 
     @computed_field
     @property
