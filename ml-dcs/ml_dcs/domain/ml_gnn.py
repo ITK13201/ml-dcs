@@ -241,8 +241,11 @@ class GNNTestingResult(BaseModel):
     @property
     def mape(self) -> float:
         if self._mape is None:
-            self._mape = mean_absolute_percentage_error(
-                self.actual_values, self.predicted_values
+            self._mape = (
+                mean_absolute_percentage_error(
+                    self.actual_values, self.predicted_values
+                )
+                * 100
             )
         return self._mape
 
