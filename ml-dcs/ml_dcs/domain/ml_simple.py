@@ -222,6 +222,7 @@ class MLSimpleTestingResult(BaseModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._size = None
         self._duration = None
         self._mae = None
         self._mse = None
@@ -230,6 +231,13 @@ class MLSimpleTestingResult(BaseModel):
         self._r_squared = None
         self._actual_values_div1000 = None
         self._predicted_values_div1000 = None
+
+    @computed_field
+    @property
+    def size(self) -> int:
+        if self._size is None:
+            self._size = len(self.lts_names)
+        return self._size
 
     @computed_field
     @property
