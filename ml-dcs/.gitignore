@@ -5,3 +5,9 @@
 
 ### Development ###
 ml-dcs.log
+tmp/
+tmp_backup/
+tmp_original/
+datasets/
+*.tar.gz
+*.zip
